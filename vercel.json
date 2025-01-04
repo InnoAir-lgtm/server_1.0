@@ -1,5 +1,7 @@
 {
     "version": 2,
+    "name": "server",
+    "public": true,
     "builds": [{ "src": "Server.js", "use": "@vercel/node" }],
     "routes": [{ "src": "/(.*)", "dest": "/Server.js" }]
   }
