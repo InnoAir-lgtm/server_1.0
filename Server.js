@@ -17,8 +17,8 @@ app.use(express.json());
 
 const corsOptions = {
     origin: [
-        'http://localhost:5173', // Desenvolvimento local
-        'https://innoair-github-io-nktw.vercel.app', // Produção no Vercel
+        'http://localhost:5173', 
+        'https://interfaceweb-lime.vercel.app', 
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
