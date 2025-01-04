@@ -17,8 +17,8 @@ app.use(express.json());
 
 const corsOptions = {
     origin: [
-        'http://localhost:5173', 
-        'https://interfaceweb-lime.vercel.app', 
+        'http://localhost:5173',  
+        'https://interface-3-1.vercel.app'
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
     allowedHeaders: ['Content-Type', 'Authorization'],
