@@ -9,7 +9,8 @@ const { cadastrarPapeis } = require('./controllers/CadastrarPapeis');
 const { cadastrarPermissoes } = require('./controllers/CadastrarPermis');
 const { cadastrarPessoa } = require('./controllers/CadastrarTipoP')
 const { cadastrarPessoaC } = require('./controllers/CadastrarPessoa')
-const { cadastrarEndereco } = require('./controllers/CadastrarEnder')
+const { cadastrarEndereco } = require('./controllers/CadastrarEnder');
+const { associarTpPe } = require('./controllers/AssociarTpPe');
 
 require('dotenv').config();
 app.use(express.json());
@@ -152,15 +153,19 @@ app.post('/cadastrar-tipo-pessoa', async (req, res) => {
     }
 });
 
-app.post("/cadastrar-tipo-pessoa", async (req, res) => {
-    const { pes_id, tpp_id } = req.body;
-
+app.post("/associar-tipo-pessoa", async (req, res) => {
     try {
-        await db.query("INSERT INTO pessoas_tipo (pes_id, tpp_id) VALUES ($1, $2)", [pes_id, tpp_id]);
-        res.status(200).json({ message: "Cadastro na tabela pessoas_tipo realizado com sucesso!" });
+        const dados = req.body;
+        const result = await associarTpPe(dados, supabase);
+
+        if (result.success) {
+            return res.status(201).json({ message: 'Tipo de pessoa cadastrado com sucesso!', data: result.data });
+        } else {
+            return res.status(400).json({ message: 'Erro ao cadastrar tipo de pessoa.', error: result.error });
+        }
     } catch (error) {
-        console.error("Erro ao inserir na tabela pessoas_tipo:", error);
-        res.status(500).json({ message: "Erro ao cadastrar na tabela pessoas_tipo." });
+        console.error('Erro ao processar requisição:', error.message);
+        return res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 });
 
@@ -451,36 +456,6 @@ app.get('/permissoes-por-papel/:papelId', async (req, res) => {
     }
 });
 
-app.get('/listar-usuarios-sch', async (req, res) => {
-    try {
-        const empresaCnpj = req.query.cnpj;
-        if (!empresaCnpj) {
-            return res.status(400).json({ message: 'CNPJ da empresa não fornecido.' });
-        }
-
-        const { data: empresaData, error: empresaError } = await supabase
-            .from('empresas')
-            .select('emp_bdschema')
-            .eq('emp_cnpj', empresaCnpj)
-            .single();
-
-        if (empresaError || !empresaData) {
-            return res.status(400).json({ message: 'Empresa não encontrada.' });
-        }
-
-        const schema = empresaData.emp_bdschema;
-        const { data, error } = await supabase
-            .schema(schema)
-            .from('tipo_pessoa')
-            .select('tpp_descricao, tpp_classificacao ');
-
-        if (error) throw error;
-        res.status(200).json(data);
-    } catch (error) {
-        console.error('Erro ao listar usuários:', error.message);
-        res.status(500).json({ message: 'Erro ao listar usuários.' });
-    }
-});
 
 
 // Endpoint para listar associações de papéis e empresas de um usuário
@@ -499,21 +474,6 @@ app.get('/listar-associacoes/:usr_id', async (req, res) => {
         res.status(500).json({ message: 'Erro ao listar associações.' });
     }
 });
-
-app.get('/listar-associacoes-uep', async (req, res) => {
-    try {
-        const { data, erro } = await supabase
-            .from('pap_usr_emp')
-            .select('*')
-        if (erro) throw error;
-
-        res.status(200).json(data)
-    } catch (error) {
-        console.error('Erro ao listar associações:', error.message);
-        res.status(500).json({ message: 'Erro ao listar associações.' });
-    }
-})
-
 
 
 
