@@ -134,6 +134,8 @@ app.post('/cadastrar-usuario', async (req, res) => {
     }
 });
 
+
+// Corrigir esse error
 app.post('/cadastrar-tipo-pessoa', async (req, res) => {
     try {
         const dados = req.body;
@@ -149,6 +151,20 @@ app.post('/cadastrar-tipo-pessoa', async (req, res) => {
         return res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 });
+
+app.post("/cadastrar-tipo-pessoa", async (req, res) => {
+    const { pes_id, tpp_id } = req.body;
+
+    try {
+        await db.query("INSERT INTO pessoas_tipo (pes_id, tpp_id) VALUES ($1, $2)", [pes_id, tpp_id]);
+        res.status(200).json({ message: "Cadastro na tabela pessoas_tipo realizado com sucesso!" });
+    } catch (error) {
+        console.error("Erro ao inserir na tabela pessoas_tipo:", error);
+        res.status(500).json({ message: "Erro ao cadastrar na tabela pessoas_tipo." });
+    }
+});
+
+//
 
 app.post('/associar-papel-empresa', async (req, res) => {
     try {
@@ -290,17 +306,7 @@ app.get('/listar-tipos-pessoa', async (req, res) => {
     }
 })
 
-app.post("/cadastrar-tipo-pessoa", async (req, res) => {
-    const { pes_id, tpp_id } = req.body;
 
-    try {
-        await db.query("INSERT INTO pessoas_tipo (pes_id, tpp_id) VALUES ($1, $2)", [pes_id, tpp_id]);
-        res.status(200).json({ message: "Cadastro na tabela pessoas_tipo realizado com sucesso!" });
-    } catch (error) {
-        console.error("Erro ao inserir na tabela pessoas_tipo:", error);
-        res.status(500).json({ message: "Erro ao cadastrar na tabela pessoas_tipo." });
-    }
-});
 
 app.post('/atualizar-associacoes', async (req, res) => {
     const { usr_id, papeis, empresas } = req.body;

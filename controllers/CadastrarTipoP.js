@@ -7,7 +7,7 @@ const cadastrarPessoa = async (dados, supabase) => {
         .schema('belaarte')
         .from('tipo_pessoa')
         .insert([{
-            tpp_descricao: dados.descricao, // Corrigido de 'descicao' para 'descricao'
+            tpp_descricao: dados.descricao, 
             tpp_classificacao: dados.classificacao
         }]);
         console.log('Dados recebidos:', dados);

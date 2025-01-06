@@ -20,7 +20,7 @@ async function cadastrarPermissoes(dados, supabase) {
     const permissao = gerarChavePermissao(descricao);
 
     const { data, error } = await supabase
-        .from('public.permissoes')
+        .from('permissoes')
         .insert([{ per_permissao: permissao, per_descricao: descricao }]);
 
     if (error) {
