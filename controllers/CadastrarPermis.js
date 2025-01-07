@@ -5,7 +5,6 @@ function gerarChavePermissao(descricao) {
         .replace(/[^\w_]/g, ''); 
 }
 
-
 async function cadastrarPermissoes(dados, supabase) {
     if (!supabase) {
         throw new Error('Supabase não configurado.');

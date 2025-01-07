@@ -442,19 +442,36 @@ app.get('/listar-usuarios', async (req, res) => {
 app.get('/permissoes-por-papel/:papelId', async (req, res) => {
     const { papelId } = req.params;
     try {
-        const { data, error } = await supabase
+        // 1ª consulta: pegar permissões do papel
+        const { data: papelPermissoes, error: papelError } = await supabase
             .from('papel_permissao')
             .select('permissao_id')
             .eq('papel_id', papelId);
 
-        if (error) throw error;
+        if (papelError) {
+            console.error("Erro ao buscar permissões do papel:", papelError);
+            throw papelError;
+        }
 
-        res.status(200).json(data.map((item) => item.permissao_id));
+        // 2ª consulta: buscar as permissões detalhadas com base nos ids
+        const permissaoIds = papelPermissoes.map((item) => item.permissao_id);
+        const { data: permissoes, error: permError } = await supabase
+            .from('permissoes')
+            .select('per_permissao, per_id')
+            .in('per_id', permissaoIds);
+
+        if (permError) {
+            console.error("Erro ao buscar permissões detalhadas:", permError);
+            throw permError;
+        }
+
+        res.status(200).json(permissoes);
     } catch (error) {
         console.error('Erro ao buscar permissões do papel:', error.message);
-        res.status(500).json({ message: 'Erro ao buscar permissões do papel.' });
+        res.status(500).json({ message: 'Erro ao buscar permissões do papel.', details: error.message });
     }
 });
+
 
 
 
@@ -464,7 +481,7 @@ app.get('/listar-associacoes/:usr_id', async (req, res) => {
     try {
         const { data, error } = await supabase
             .from('pap_usr_emp')
-            .select('pap_id, emp_cnpj, empresas(emp_nome)')
+            .select('pap_id, emp_cnpj, empresas(emp_nome), papeis(pap_papel)')
             .eq('usr_id', usr_id);
         if (error) throw error;
 
