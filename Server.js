@@ -18,7 +18,7 @@ app.use(express.json());
 
 const corsOptions = {
     origin: [
-        'http://localhost:5173',  
+        'http://localhost:5173',
         'https://interface-3-1.vercel.app'
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -315,7 +315,6 @@ app.get('/listar-tipos-pessoa', async (req, res) => {
 
 app.post('/atualizar-associacoes', async (req, res) => {
     const { usr_id, papeis, empresas } = req.body;
-
     try {
         const { error: deleteError } = await supabase
             .from('pap_usr_emp')
@@ -325,25 +324,37 @@ app.post('/atualizar-associacoes', async (req, res) => {
         if (deleteError) throw deleteError;
 
         const newAssociations = [];
-        papeis.forEach((pap_id) => {
-            empresas.forEach((emp_cnpj) => {
-                newAssociations.push({ usr_id, pap_id, emp_cnpj });
-            });
-        });
+        for (let pap_id of papeis) {
+            for (let emp_cnpj of empresas) {
+                const { data: existingAssociations, error: selectError } = await supabase
+                    .from('pap_usr_emp')
+                    .select('usr_id')
+                    .eq('usr_id', usr_id)
+                    .eq('pap_id', pap_id)
+                    .eq('emp_cnpj', emp_cnpj);
+
+                if (selectError) throw selectError;
+                if (existingAssociations.length === 0) {
+                    newAssociations.push({ usr_id, pap_id, emp_cnpj });
+                }
+            }
+        }
+
         if (newAssociations.length > 0) {
             const { error: insertError } = await supabase
                 .from('pap_usr_emp')
-                .insert(newAssociations);
+                .upsert(newAssociations, { onConflict: ['usr_id', 'pap_id', 'emp_cnpj'] });
 
             if (insertError) throw insertError;
         }
-
         res.status(200).json({ message: 'Associações atualizadas com sucesso!' });
     } catch (error) {
-        console.error('Erro ao atualizar associações:', error.message);
-        res.status(500).json({ message: 'Erro ao atualizar associações.' });
+        console.error(error);
+        res.status(500).json({ message: 'Erro ao atualizar associações', error: error.message });
     }
 });
+
+
 
 app.post('/associar-permissao', async (req, res) => {
     try {
@@ -441,8 +452,8 @@ app.get('/listar-usuarios', async (req, res) => {
 
 app.get('/permissoes-por-papel/:papelId', async (req, res) => {
     const { papelId } = req.params;
+
     try {
-        // 1ª consulta: pegar permissões do papel
         const { data: papelPermissoes, error: papelError } = await supabase
             .from('papel_permissao')
             .select('permissao_id')
@@ -450,11 +461,16 @@ app.get('/permissoes-por-papel/:papelId', async (req, res) => {
 
         if (papelError) {
             console.error("Erro ao buscar permissões do papel:", papelError);
-            throw papelError;
+            return res.status(500).json({ message: "Erro ao buscar permissões do papel." });
         }
 
-        // 2ª consulta: buscar as permissões detalhadas com base nos ids
+        if (!papelPermissoes || papelPermissoes.length === 0) {
+            return res.status(200).json([]);
+        }
+
         const permissaoIds = papelPermissoes.map((item) => item.permissao_id);
+
+
         const { data: permissoes, error: permError } = await supabase
             .from('permissoes')
             .select('per_permissao, per_id')
@@ -462,20 +478,18 @@ app.get('/permissoes-por-papel/:papelId', async (req, res) => {
 
         if (permError) {
             console.error("Erro ao buscar permissões detalhadas:", permError);
-            throw permError;
+            return res.status(500).json({ message: "Erro ao buscar permissões detalhadas." });
         }
 
         res.status(200).json(permissoes);
     } catch (error) {
-        console.error('Erro ao buscar permissões do papel:', error.message);
-        res.status(500).json({ message: 'Erro ao buscar permissões do papel.', details: error.message });
+        console.error("Erro ao buscar permissões do papel:", error.message);
+        res.status(500).json({ message: "Erro interno ao buscar permissões.", details: error.message });
     }
 });
 
 
 
-
-// Endpoint para listar associações de papéis e empresas de um usuário
 app.get('/listar-associacoes/:usr_id', async (req, res) => {
     const { usr_id } = req.params;
     try {
