@@ -94,30 +94,27 @@ app.post('/cadastrar-endereco', async (req, res) => {
 });
 
 app.post('/cadastrar-pessoa', async (req, res) => {
+    const { schema, ...dados } = req.body;
+
+    if (!schema) {
+        return res.status(400).json({ error: 'Schema não especificado.' });
+    }
+
     try {
-        const dados = req.body;
-        const result = await cadastrarPessoaC(dados, supabase);
+        const result = await cadastrarPessoaC(dados, supabase, schema);
 
-        console.log(dados);
-
-        if (result.success) {
-            return res.status(201).json({
-                message: 'Pessoa cadastrada com sucesso!',
-                data: result.data,
-            });
-        } else {
-            return res.status(400).json({
-                message: 'Erro ao cadastrar pessoa.',
-                error: result.error,
-            });
+        if (!result.success) {
+            return res.status(400).json({ error: result.error });
         }
+
+        res.status(201).json({ message: 'Pessoa cadastrada com sucesso!', data: result.data });
     } catch (error) {
-        console.error('Erro ao processar requisição:', error.message);
-        return res.status(500).json({
-            message: 'Erro interno do servidor.',
-        });
+        console.error(error);
+        res.status(500).json({ error: 'Erro ao cadastrar pessoa.' });
     }
 });
+
+
 
 
 app.post('/cadastrar-usuario', async (req, res) => {
@@ -189,17 +186,20 @@ app.post('/associar-papel-empresa', async (req, res) => {
     }
 });
 
-
 app.post('/associar-endereco', async (req, res) => {
     try {
-        const { pes_id, epe_numero, epe_complemento, epe_tipo, end_cep, epe_latitude, epe_longitude } = req.body;
+        const { schema, pes_id, epe_numero, epe_complemento, epe_tipo, end_cep, epe_latitude, epe_longitude } = req.body;
+
+        if (!schema) {
+            return res.status(400).json({ message: 'O campo schema é obrigatório.' });
+        }
 
         if (!pes_id || !epe_tipo || !end_cep) {
             return res.status(400).json({ message: 'Os campos pes_id, epe_tipo e end_cep são obrigatórios.' });
         }
 
         const { error } = await supabase
-            .schema('belaarte')
+            .schema(schema)
             .from('endereco_pessoa')
             .insert([{
                 pes_id,
@@ -208,71 +208,66 @@ app.post('/associar-endereco', async (req, res) => {
                 epe_tipo,
                 end_cep,
                 epe_latitude,
-                epe_longitude
+                epe_longitude,
             }]);
 
         if (error) throw error;
 
         res.status(201).json({ message: 'Endereço associado com sucesso!' });
-
     } catch (error) {
         console.error('Erro ao associar endereço à pessoa:', error.message);
         res.status(500).json({ message: 'Erro ao associar endereço à pessoa.' });
     }
 });
 
+
+
 app.post('/associar-contato-pessoa', async (req, res) => {
     try {
-        const { ctt_contato, ctt_tipo, pes_id, ctt_numero_email } = req.body;
+        const { schema, ctt_contato, ctt_tipo, pes_id, ctt_numero_email } = req.body;
 
-        if (!pes_id) {
-            return res.status(400).json({ message: 'Os campos devem ser preenchidos' });
+        // Logando os dados recebidos no request
+        console.log('Dados recebidos:', {
+            schema,
+            ctt_contato,
+            ctt_tipo,
+            pes_id,
+            ctt_numero_email,
+        });
+
+        if (!schema) {
+            console.warn('Schema não fornecido.');
+            return res.status(400).json({ message: 'O campo schema é obrigatório.' });
         }
 
-        const { data, error } = await supabase
-            .schema('belaarte')
+        if (!pes_id || !ctt_contato || !ctt_tipo) {
+            console.warn('Campos obrigatórios ausentes:', { pes_id, ctt_contato, ctt_tipo });
+            return res.status(400).json({ message: 'Os campos pes_id, ctt_contato e ctt_tipo são obrigatórios.' });
+        }
+
+        const { error } = await supabase
+            .schema(schema)
             .from('contatos')
-            .insert([
-                {
-                    ctt_contato,
-                    ctt_tipo,
-                    pes_id,
-                    ctt_numero_email,
-                },
-            ]);
+            .insert([{
+                ctt_contato,
+                ctt_tipo,
+                pes_id,
+                ctt_numero_email,
+            }]);
 
-        if (error) throw error;
-
-        res.status(201).json({ message: 'Contato associado com sucesso', data });
-    } catch (error) {
-        console.error('Erro ao associar contato a pessoa:', error.message);
-        res.status(500).json({ message: 'Erro ao associar contato a pessoa' });
-    }
-});
-
-app.get('/listar-endereco', async (req, res) => {
-    try {
-        const { pes_id } = req.query;
-
-        if (!pes_id) {
-            return res.status(400).json({ message: 'O campo pes_id é obrigatório.' });
+        if (error) {
+            console.error('Erro ao inserir contato no banco de dados:', error.message);
+            throw error;
         }
 
-        const { data, error } = await supabase
-            .schema('belaarte')
-            .from('endereco_pessoa')
-            .select('*')
-            .eq('pes_id', pes_id);
-
-        if (error) throw error;
-
-        res.status(200).json({ data });
-
+        console.log('Contato associado com sucesso no schema:', schema);
+        res.status(201).json({ message: 'Contato associado com sucesso!' });
     } catch (error) {
-        console.error('Erro ao listar endereços:', error.message);
-        res.status(500).json({ message: 'Erro ao listar endereços.' });
+        console.error('Erro ao associar contato à pessoa:', error.message);
+        res.status(500).json({ message: 'Erro ao associar contato à pessoa.' });
     }
 });
+
 
 app.get('/listar-contatos-pessoa', async (req, res) => {
     try {
@@ -391,16 +386,128 @@ app.get('/lista-empresas', async (req, res) => {
 
 app.get('/listar-endereco-pessoa', async (req, res) => {
     try {
-        const { data, error } = await supabase.schema('belaarte').from('endereco_pessoa').select('*')
-        if (error) {
-            throw error
+        const { schema } = req.query;
+        if (!schema) {
+            return res.status(400).json({ message: 'Schema não fornecido.' });
         }
-        res.status(200).json(data)
+
+        const { data, error } = await supabase
+            .schema(schema)
+            .from('endereco_pessoa')
+            .select('*');
+
+        if (error) {
+            throw error;
+        }
+
+        res.status(200).json(data);
     } catch (error) {
-        console.error('error ao listar endereco pessoa')
-        res.status(500).json({ message: 'Error ao listar endereco pessoa' })
+        console.error('Erro ao listar endereço pessoa:', error.message);
+        res.status(500).json({ message: 'Erro ao listar endereço pessoa.' });
     }
-})
+});
+
+
+app.get('/buscar-schema', async (req, res) => {
+    const { cnpj } = req.query;
+
+    try {
+        // Busca o schema associado ao CNPJ
+        const { data, error } = await supabase
+            .from('empresas')
+            .select('emp_bdschema')
+            .eq('emp_cnpj', cnpj)
+            .single();
+
+        if (error) throw error;
+
+        if (!data) {
+            return res.status(404).json({ error: 'Empresa não encontrada' });
+        }
+
+        // Retorna o schema encontrado
+        res.json({ schema: data.emp_bdschema });
+    } catch (error) {
+        console.error('Erro ao buscar schema:', error.message);
+        res.status(500).json({ error: 'Erro interno ao buscar schema' });
+    }
+});
+
+app.get('/dados-empresa', async (req, res) => {
+    const { cnpj } = req.query;  // Pegando o CNPJ da query string
+
+    try {
+        // Busca o schema associado ao CNPJ
+        const { data, error } = await supabase
+            .from('empresas')
+            .select('*')  // Seleciona todos os dados da empresa
+            .eq('emp_cnpj', cnpj)
+            .single();  // Retorna um único resultado
+
+        if (error) throw error;
+
+        if (!data) {
+            return res.status(404).json({ message: 'Empresa não encontrada' });
+        }
+
+        // Retorna os dados encontrados
+        res.json(data);
+    } catch (error) {
+        console.error('Erro ao buscar dados da empresa:', error.message);
+        res.status(500).json({ error: 'Erro interno ao buscar dados da empresa' });
+    }
+});
+
+
+
+app.get('/pessoas', async (req, res) => {
+    try {
+        const { schema } = req.query;
+
+        if (!schema) {
+            return res.status(400).json({ message: 'O campo schema é obrigatório.' });
+        }
+
+        const { data, error } = await supabase
+            .schema(schema)
+            .from('pessoas')
+            .select('*');
+        if (error) throw error;
+
+        res.status(200).json({ data });
+
+    } catch (error) {
+        console.error('Erro ao listar pessoas:', error.message);
+        res.status(500).json({ message: 'Erro ao listar pessoas.' });
+    }
+});
+
+app.get('/listar-endereco', async (req, res) => {
+    try {
+        const { pes_id, schema } = req.query;
+
+        if (!pes_id || !schema) {
+            return res.status(400).json({ message: 'Os campos pes_id e schema são obrigatórios.' });
+        }
+
+        const { data, error } = await supabase
+            .schema(schema)
+            .from('endereco_pessoa')
+            .select('*')
+            .eq('pes_id', pes_id);
+        console.log('Schema:', schema); // Adicionar log
+
+
+        if (error) throw error;
+
+        res.status(200).json({ data });
+
+    } catch (error) {
+        console.error('Erro ao listar endereços:', error.message);
+        res.status(500).json({ message: 'Erro ao listar endereços.' });
+    }
+});
+
 
 app.get('/listar-papeis', async (req, res) => {
     try {
@@ -415,16 +522,7 @@ app.get('/listar-papeis', async (req, res) => {
     }
 });
 
-app.get('/pessoas', async (req, res) => {
-    try {
-        const { data, error } = await supabase.schema('belaarte').from('pessoas').select('*')
-        if (error) throw error
-        res.status(200).json(data)
-    } catch (error) {
-        console.error('Erro ao listar permissoes', error.message)
-        res.status(500).json({ message: 'Erro ao listar permissões' })
-    }
-})
+
 
 app.get('/listar-permissoes', async (req, res) => {
     try {

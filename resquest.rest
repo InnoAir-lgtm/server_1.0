@@ -41,6 +41,7 @@ Content-Type: application/json
 GET http://localhost:3000/listar-contatos-pessoa
 Content-Type: application/json
 
-{
-    
-}
+###
+
+GET http://localhost:3000/pessoas?schema=belaarte_service
+Content-Type: application/json
