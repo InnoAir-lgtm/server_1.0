@@ -84,12 +84,23 @@ app.post('/cadastrar-permissoes', async (req, res) => {
 });
 
 app.post('/cadastrar-endereco', async (req, res) => {
+    const { schema, ...dados } = req.body;
+
+    if (!schema) {
+        return res.status(400).json({ error: 'Schema não especificado.' });
+    }
+
     try {
-        const result = await cadastrarEndereco(req.body, supabase);
-        res.status(200).json(result);
+        const result = await cadastrarEndereco(dados, supabase, schema);
+
+        if (!result.success) {
+            return res.status(400).json({ error: result.error });
+        }
+
+        res.status(201).json({ message: 'Endereço cadastrado com sucesso!', data: result.data });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ success: false, error: 'Erro ao cadastrar endereço.' });
+        console.error('Erro ao cadastrar endereço:', error);
+        res.status(500).json({ error: 'Erro ao cadastrar endereço.' });
     }
 });
 
@@ -116,7 +127,6 @@ app.post('/cadastrar-pessoa', async (req, res) => {
 
 
 
-
 app.post('/cadastrar-usuario', async (req, res) => {
     try {
         const dados = req.body;
@@ -135,9 +145,16 @@ app.post('/cadastrar-usuario', async (req, res) => {
 
 // Corrigir esse error
 app.post('/cadastrar-tipo-pessoa', async (req, res) => {
+
+    const { schema, ...dados } = req.body;
+
+    if (!schema) {
+        return res.status(400).json({ error: 'Schema não especificado.' });
+    }
+
     try {
         const dados = req.body;
-        const result = await cadastrarPessoa(dados, supabase);
+        const result = await cadastrarPessoa(dados, supabase, schema);
 
         if (result.success) {
             return res.status(201).json({ message: 'Tipo de pessoa cadastrado com sucesso!', data: result.data });
@@ -165,6 +182,7 @@ app.post("/associar-tipo-pessoa", async (req, res) => {
         return res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 });
+
 
 //
 
@@ -225,8 +243,6 @@ app.post('/associar-endereco', async (req, res) => {
 app.post('/associar-contato-pessoa', async (req, res) => {
     try {
         const { schema, ctt_contato, ctt_tipo, pes_id, ctt_numero_email } = req.body;
-
-        // Logando os dados recebidos no request
         console.log('Dados recebidos:', {
             schema,
             ctt_contato,
@@ -271,13 +287,18 @@ app.post('/associar-contato-pessoa', async (req, res) => {
 
 app.get('/listar-contatos-pessoa', async (req, res) => {
     try {
-        const { pes_id } = req.query
+        const { pes_id, schema } = req.query
         if (!pes_id) {
             return res.status(400).json({ message: 'O campo pes_id e obrigatorio' })
         }
 
+        if (!schema) {
+            console.warn('Schema não fornecido.');
+            return res.status(400).json({ message: 'O campo schema é obrigatório.' });
+        }
+
         const { data, error } = await supabase
-            .schema('belaarte')
+            .schema(schema)
             .from('contatos')
             .select('*')
             .eq('pes_id', pes_id)
@@ -293,8 +314,14 @@ app.get('/listar-contatos-pessoa', async (req, res) => {
 
 app.get('/listar-tipos-pessoa', async (req, res) => {
     try {
+        const { schema } = req.query
+        if (!schema) {
+            console.warn('Schema não aparece.');
+            return res.status(400).json({ message: 'O campo schema é obrigatorio' })
+        }
+
         const { data, error } = await supabase
-            .schema('belaarte')
+            .schema(schema)
             .from('tipo_pessoa')
             .select('*');
 

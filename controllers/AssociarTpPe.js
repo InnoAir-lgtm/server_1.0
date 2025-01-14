@@ -4,7 +4,8 @@ const associarTpPe = async (dados, supabase) => {
         throw new Error('Supabase não configurado.');
     }
 
-    console.log('Pes ID:', dados.pes_id, 'Selected Tipo:', dados.selectedTipo);
+   
+    console.log('Pes ID:', dados.pes_id, 'Selected Tipo:', dados.tpp_id);
 
  
     const { data, error } = await supabase

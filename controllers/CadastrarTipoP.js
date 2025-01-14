@@ -3,8 +3,12 @@ const cadastrarPessoa = async (dados, supabase) => {
         throw new Error('Supabase não configurado.');
     }
 
+    if (!schema) {
+        throw new Error('Schema not specified');
+    }
+
     const { data, error } = await supabase
-        .schema('belaarte')
+        .schema(schema)
         .from('tipo_pessoa')
         .insert([{
             tpp_descricao: dados.descricao, 

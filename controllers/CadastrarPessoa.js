@@ -8,20 +8,15 @@ const cadastrarPessoaC = async (dados, supabase, schema) => {
     }
 
     try {
-        // Desestruturação dos dados recebidos
         const { tipoPessoa, cpf, cnpj, rg, inscricaoEstadual, dataNascimento, nome, fantasia } = dados;
-
-        // Validações básicas
         if (!tipoPessoa || (!cpf && !cnpj) || !nome) {
             throw new Error('Dados obrigatórios ausentes. Verifique o tipo de pessoa, CPF/CNPJ e nome.');
         }
 
-        // Identificador para pessoa física ou jurídica
         const identificador = tipoPessoa === 'cpf' ? cpf : cnpj;
 
-        // Verifica duplicidade no sistema
         const { data: existePessoa, error: consultaError } = await supabase
-            .schema(schema) // Define o schema dinamicamente
+            .schema(schema) 
             .from('pessoas')
             .select('pes_id')
             .eq('pes_cpf_cnpj', identificador);
@@ -35,7 +30,6 @@ const cadastrarPessoaC = async (dados, supabase, schema) => {
             return { success: false, error: 'CPF ou CNPJ já cadastrado no sistema.' };
         }
 
-        // Payload para cadastro
         const payload = {
             pes_rg: rg,
             pes_ie: inscricaoEstadual,
@@ -48,7 +42,7 @@ const cadastrarPessoaC = async (dados, supabase, schema) => {
 
         
         const { data, error } = await supabase
-            .schema(schema) // Define o schema dinamicamente
+            .schema(schema)
             .from('pessoas')
             .insert([payload])
             .select('pes_id');

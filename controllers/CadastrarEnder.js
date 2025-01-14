@@ -1,10 +1,14 @@
-async function cadastrarEndereco(dados, supabase) {
+async function cadastrarEndereco(dados, supabase, schema) {
     if (!supabase) {
-        throw new Error('BD not configured')
+        throw new Error('BD not configured');
+    }
+
+    if (!schema) {
+        throw new Error('Schema not specified');
     }
 
     const { data, error } = await supabase
-        .schema('belaarte')
+        .schema(schema) 
         .from('enderecos')
         .insert([
             {
@@ -21,7 +25,6 @@ async function cadastrarEndereco(dados, supabase) {
     }
 
     return { success: true, data };
+}
 
-};
-
-module.exports = { cadastrarEndereco }
+module.exports = { cadastrarEndereco };
