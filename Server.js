@@ -333,11 +333,15 @@ app.get('/listar-tipos-pessoa', async (req, res) => {
     }
 })
 
-
-
 app.post('/atualizar-associacoes', async (req, res) => {
-    const { usr_id, papeis, empresas } = req.body;
+    const { usr_id, associacoes } = req.body; // Recebe um array de objetos { emp_cnpj, papeis: [pap_id] }
+
+    if (!Array.isArray(associacoes)) {
+        return res.status(400).json({ error: 'O campo "associacoes" deve ser um array.' });
+    }
+
     try {
+        // Remove as associações existentes para o usuário
         const { error: deleteError } = await supabase
             .from('pap_usr_emp')
             .delete()
@@ -345,36 +349,24 @@ app.post('/atualizar-associacoes', async (req, res) => {
 
         if (deleteError) throw deleteError;
 
-        const newAssociations = [];
-        for (let pap_id of papeis) {
-            for (let emp_cnpj of empresas) {
-                const { data: existingAssociations, error: selectError } = await supabase
-                    .from('pap_usr_emp')
-                    .select('usr_id')
-                    .eq('usr_id', usr_id)
-                    .eq('pap_id', pap_id)
-                    .eq('emp_cnpj', emp_cnpj);
 
-                if (selectError) throw selectError;
-                if (existingAssociations.length === 0) {
-                    newAssociations.push({ usr_id, pap_id, emp_cnpj });
-                }
-            }
-        }
+        const newAssociations = associacoes.flatMap(({ emp_cnpj, papeis }) =>
+            papeis.map((pap_id) => ({ usr_id, pap_id, emp_cnpj }))
+        );
 
-        if (newAssociations.length > 0) {
-            const { error: insertError } = await supabase
-                .from('pap_usr_emp')
-                .upsert(newAssociations, { onConflict: ['usr_id', 'pap_id', 'emp_cnpj'] });
+        const { error: insertError } = await supabase
+            .from('pap_usr_emp')
+            .insert(newAssociations);
 
-            if (insertError) throw insertError;
-        }
-        res.status(200).json({ message: 'Associações atualizadas com sucesso!' });
+        if (insertError) throw insertError;
+
+        res.json({ message: 'Associações atualizadas com sucesso!' });
     } catch (error) {
         console.error(error);
-        res.status(500).json({ message: 'Erro ao atualizar associações', error: error.message });
+        res.status(500).json({ error: 'Erro ao atualizar associações.' });
     }
 });
+
 
 
 
