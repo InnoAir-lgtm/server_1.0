@@ -125,6 +125,31 @@ app.post('/cadastrar-pessoa', async (req, res) => {
     }
 });
 
+app.post('/cadastrar-tipo-pessoa', async (req, res) => {
+    const { schema, ...dados } = req.body;
+
+    // Verifica se o schema foi enviado
+    if (!schema) {
+        return res.status(400).json({ error: 'Schema não especificado.' });
+    }
+
+    try {
+        // Passa o schema para a função de cadastro
+        const result = await cadastrarPessoa(dados, supabase, schema);
+        console.log(result);
+
+        if (result.success) {
+            return res.status(201).json({ message: 'Tipo de pessoa cadastrado com sucesso!', data: result.data });
+        } else {
+            return res.status(400).json({ message: 'Erro ao cadastrar tipo de pessoa.', error: result.error });
+        }
+    } catch (error) {
+        console.error('Erro ao processar requisição:', error.message);
+        return res.status(500).json({ message: 'Erro interno do servidor.' });
+    }
+});
+
+
 
 
 app.post('/cadastrar-usuario', async (req, res) => {
@@ -144,28 +169,9 @@ app.post('/cadastrar-usuario', async (req, res) => {
 
 
 // Corrigir esse error
-app.post('/cadastrar-tipo-pessoa', async (req, res) => {
 
-    const { schema, ...dados } = req.body;
 
-    if (!schema) {
-        return res.status(400).json({ error: 'Schema não especificado.' });
-    }
 
-    try {
-        const dados = req.body;
-        const result = await cadastrarPessoa(dados, supabase, schema);
-
-        if (result.success) {
-            return res.status(201).json({ message: 'Tipo de pessoa cadastrado com sucesso!', data: result.data });
-        } else {
-            return res.status(400).json({ message: 'Erro ao cadastrar tipo de pessoa.', error: result.error });
-        }
-    } catch (error) {
-        console.error('Erro ao processar requisição:', error.message);
-        return res.status(500).json({ message: 'Erro interno do servidor.' });
-    }
-});
 
 app.post("/associar-tipo-pessoa", async (req, res) => {
     try {
