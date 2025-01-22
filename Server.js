@@ -335,13 +335,10 @@ app.get('/listar-tipos-pessoa', async (req, res) => {
 
 app.post('/atualizar-associacoes', async (req, res) => {
     const { usr_id, associacoes } = req.body; // Recebe um array de objetos { emp_cnpj, papeis: [pap_id] }
-
     if (!Array.isArray(associacoes)) {
         return res.status(400).json({ error: 'O campo "associacoes" deve ser um array.' });
     }
-
     try {
-        // Remove as associações existentes para o usuário
         const { error: deleteError } = await supabase
             .from('pap_usr_emp')
             .delete()
@@ -660,7 +657,7 @@ app.post('/login-master', async (req, res) => {
 
         const { data: usuarios, error } = await supabase
             .from('usuarios')
-            .select('usr_id, usr_email, usr_senha, usr_perfil, usr_grupo')
+            .select('usr_id, usr_email, usr_senha, usr_perfil, usr_grupo, usr_nome')
             .eq('usr_email', email)
             .eq('usr_senha', senha);
         if (error) {
@@ -677,6 +674,7 @@ app.post('/login-master', async (req, res) => {
             return res.status(200).json({
                 message: 'Login bem-sucedido!',
                 user: {
+                    nome: usuario.usr_nome,
                     email: usuario.usr_email,
                     perfil: usuario.usr_perfil,
                     grupo: usuario.usr_grupo,
