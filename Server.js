@@ -128,13 +128,11 @@ app.post('/cadastrar-pessoa', async (req, res) => {
 app.post('/cadastrar-tipo-pessoa', async (req, res) => {
     const { schema, ...dados } = req.body;
 
-    // Verifica se o schema foi enviado
     if (!schema) {
         return res.status(400).json({ error: 'Schema não especificado.' });
     }
 
     try {
-        // Passa o schema para a função de cadastro
         const result = await cadastrarPessoa(dados, supabase, schema);
         console.log(result);
 
