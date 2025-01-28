@@ -4,16 +4,16 @@
     "public": true,
     "builds": [
       { "src": "Server.js", "use": "@vercel/node" },
-      { "src": "public/**/*", "use": "@vercel/static" }
+      { "src": "dist/**", "use": "@vercel/static" }
     ],
     "routes": [
       {
-        "src": "^/api/(.*)", 
-        "dest": "/"
+        "src": "^/api/(.*)",
+        "dest": "/Server.js"
       },
       {
-        "src": "/(.*)", 
-        "dest": "/Server.js"
+        "src": "/(.*)",
+        "dest": "/dist/index.html"
       }
     ]
   }
