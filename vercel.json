@@ -2,19 +2,7 @@
     "version": 2,
     "name": "server",
     "public": true,
-    "builds": [
-      { "src": "Server.js", "use": "@vercel/node" },
-      { "src": "dist/**", "use": "@vercel/static" }
-    ],
-    "routes": [
-      {
-        "src": "^/api/(.*)",
-        "dest": "/Server.js"
-      },
-      {
-        "src": "/(.*)",
-        "dest": "/dist/index.html"
-      }
-    ]
+    "builds": [{ "src": "Server.js", "use": "@vercel/node" }],
+    "routes": [{ "src": "/(.*)", "dest": "/Server.js" }]
   }
   
