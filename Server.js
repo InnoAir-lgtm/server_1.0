@@ -295,12 +295,10 @@ app.get('/listar-contatos-pessoa', async (req, res) => {
         if (!pes_id) {
             return res.status(400).json({ message: 'O campo pes_id e obrigatorio' })
         }
-
         if (!schema) {
             console.warn('Schema não fornecido.');
             return res.status(400).json({ message: 'O campo schema é obrigatório.' });
         }
-
         const { data, error } = await supabase
             .schema(schema)
             .from('contatos')
@@ -315,6 +313,58 @@ app.get('/listar-contatos-pessoa', async (req, res) => {
         res.status(500).json({ message: 'erro ao listar Contatos' })
     }
 })
+
+app.delete('/deletar-contato', async (req, res) => {
+    try {
+        const { ctt_id, schema } = req.query; 
+        if (!ctt_id) {
+            return res.status(400).json({ message: 'O campo ctt_id é obrigatório' });
+        }
+        if (!schema) {
+            console.warn('Schema não fornecido.');
+            return res.status(400).json({ message: 'O campo schema é obrigatório.' });
+        }
+
+        const { error } = await supabase
+            .schema(schema)
+            .from('contatos')
+            .delete()
+            .eq('ctt_id', ctt_id); 
+
+        if (error) throw error;
+
+        res.status(200).json({ message: 'Contato deletado com sucesso' });
+    } catch (error) {
+        console.error('Erro ao deletar contato:', error.message);
+        res.status(500).json({ message: 'Erro ao deletar contato' });
+    }
+});
+
+app.delete('/deletar-tipos-pessoa', async (req, res) => {
+    try {
+        const { pes_id, tpp_id, schema } = req.query;
+        if (!pes_id || !tpp_id || !schema) {
+            return res.status(400).json({ message: 'Os campos pes_id, tpp_id e schema são obrigatórios.' });
+        }
+        const { data, error } = await supabase
+            .schema(schema)
+            .from('pessoas_tipo')
+            .delete()
+            .eq('pes_id', pes_id)
+            .eq('tpp_id', tpp_id);
+
+        if (error) {
+            throw error;
+        }
+
+        res.status(200).json({ message: 'Tipo de pessoa removido com sucesso.' });
+    } catch (error) {
+        console.error('Erro ao excluir tipo de pessoa:', error.message);
+        res.status(500).json({ message: 'Erro ao excluir tipo de pessoa.' });
+    }
+});
+
+
 
 app.get('/listar-tipos-pessoa', async (req, res) => {
     try {
@@ -336,6 +386,55 @@ app.get('/listar-tipos-pessoa', async (req, res) => {
         res.status(500).json({ message: 'Erro ao listar Tipos' })
     }
 })
+
+app.get('/tipos-pessoa', async (req, res) => {
+    try {
+        const { pes_id, schema } = req.query;
+        if (!pes_id || !schema) {
+            return res.status(400).json({ message: 'Os campos pes_id e schema são obrigatórios.' });
+        }
+        const { data: tiposPessoa, error: tiposPessoaError } = await supabase
+            .schema(schema)
+            .from('pessoas_tipo')
+            .select('tpp_id')
+            .eq('pes_id', pes_id);
+
+        if (tiposPessoaError) {
+            throw tiposPessoaError;
+        }
+        if (!tiposPessoa || tiposPessoa.length === 0) {
+            return res.status(404).json({ message: 'Nenhum tipo de pessoa encontrado para este pes_id.' });
+        }
+        const tppIds = tiposPessoa.map(tipo => tipo.tpp_id);
+        const { data: tiposDescricao, error: tiposDescricaoError } = await supabase
+            .schema(schema)
+            .from('tipo_pessoa')
+            .select('tpp_id, tpp_descricao')
+            .in('tpp_id', tppIds);
+
+        if (tiposDescricaoError) {
+            throw tiposDescricaoError;
+        }
+        const result = tiposPessoa.map(tipo => {
+            const descricao = tiposDescricao.find(d => d.tpp_id === tipo.tpp_id);
+            return {
+                tpp_id: tipo.tpp_id,
+                tpp_descricao: descricao ? descricao.tpp_descricao : 'Descrição não encontrada',
+            };
+        });
+
+        res.status(200).json({ data: result });
+    } catch (error) {
+        console.error('Erro ao listar tipos de pessoa:', error.message);
+        res.status(500).json({ message: 'Erro ao listar tipos de pessoa.' });
+    }
+});
+
+
+
+
+
+
 
 app.post('/atualizar-associacoes', async (req, res) => {
     const { usr_id, associacoes } = req.body; // Recebe um array de objetos { emp_cnpj, papeis: [pap_id] }
@@ -404,28 +503,82 @@ app.get('/lista-empresas', async (req, res) => {
     }
 })
 
-app.get('/listar-endereco-pessoa', async (req, res) => {
+// app.get('/listar-endereco-pessoa', async (req, res) => {
+//     try {
+//         const { schema } = req.query;
+//         if (!schema) {
+//             return res.status(400).json({ message: 'Schema não fornecido.' });
+//         }
+
+//         const { data, error } = await supabase
+//             .schema(schema)
+//             .from('endereco_pessoa')
+//             .select('*');
+
+//         if (error) {
+//             throw error;
+//         }
+
+//         res.status(200).json(data);
+//     } catch (error) {
+//         console.error('Erro ao listar endereço pessoa:', error.message);
+//         res.status(500).json({ message: 'Erro ao listar endereço pessoa.' });
+//     }
+// });
+
+app.get('/listar-endereco', async (req, res) => {
     try {
-        const { schema } = req.query;
-        if (!schema) {
-            return res.status(400).json({ message: 'Schema não fornecido.' });
+        const { pes_id, schema } = req.query;
+
+        if (!pes_id || !schema) {
+            return res.status(400).json({ message: 'Os campos pes_id e schema são obrigatórios.' });
         }
 
         const { data, error } = await supabase
             .schema(schema)
             .from('endereco_pessoa')
-            .select('*');
+            .select('*')
+            .eq('pes_id', pes_id);
+        console.log('Schema:', schema); // Adicionar log
 
-        if (error) {
-            throw error;
-        }
 
-        res.status(200).json(data);
+        if (error) throw error;
+
+        res.status(200).json({ data });
+
     } catch (error) {
-        console.error('Erro ao listar endereço pessoa:', error.message);
-        res.status(500).json({ message: 'Erro ao listar endereço pessoa.' });
+        console.error('Erro ao listar endereços:', error.message);
+        res.status(500).json({ message: 'Erro ao listar endereços.' });
     }
 });
+
+app.delete('/deletar-endereco', async (req, res) => {
+    try {
+        const { id, schema } = req.query;
+
+        if (!id) {
+            return res.status(400).json({ message: 'O campo id é obrigatório.' });
+        }
+        if (!schema) {
+            console.warn('Schema não fornecido.');
+            return res.status(400).json({ message: 'O campo schema é obrigatório.' });
+        }
+
+        const { error } = await supabase
+            .schema(schema)
+            .from('endereco_pessoa')
+            .delete()
+            .eq('epe_id', id); // Certifique-se de que 'epe_id' é a coluna correta para o ID do endereço.
+
+        if (error) throw error;
+
+        res.status(200).json({ message: 'Endereço deletado com sucesso.' });
+    } catch (error) {
+        console.error('Erro ao deletar endereço:', error.message);
+        res.status(500).json({ message: 'Erro ao deletar endereço.' });
+    }
+});
+
 
 
 app.get('/buscar-schema', async (req, res) => {
@@ -502,31 +655,32 @@ app.get('/pessoas', async (req, res) => {
     }
 });
 
-app.get('/listar-endereco', async (req, res) => {
+app.delete('/pessoas/:id', async (req, res) => {
     try {
-        const { pes_id, schema } = req.query;
+        const { id } = req.params;
+        const { schema } = req.query;
 
-        if (!pes_id || !schema) {
-            return res.status(400).json({ message: 'Os campos pes_id e schema são obrigatórios.' });
+        if (!schema) {
+            return res.status(400).json({ message: 'O campo schema é obrigatório.' });
         }
 
         const { data, error } = await supabase
             .schema(schema)
-            .from('endereco_pessoa')
-            .select('*')
-            .eq('pes_id', pes_id);
-        console.log('Schema:', schema); // Adicionar log
-
+            .from('pessoas')
+            .delete()
+            .eq('pes_id', id);
 
         if (error) throw error;
 
-        res.status(200).json({ data });
-
+        res.status(200).json({ message: 'Pessoa deletada com sucesso.' });
     } catch (error) {
-        console.error('Erro ao listar endereços:', error.message);
-        res.status(500).json({ message: 'Erro ao listar endereços.' });
+        console.error('Erro ao deletar pessoa:', error.message);
+        res.status(500).json({ message: 'Erro ao deletar pessoa.' });
     }
 });
+
+
+
 
 
 app.get('/listar-papeis', async (req, res) => {
@@ -624,8 +778,6 @@ app.get('/listar-associacoes/:usr_id', async (req, res) => {
     }
 });
 
-
-
 app.delete('/remover-permissao', async (req, res) => {
     try {
         const { papel_id, permissao_id } = req.body;
@@ -648,7 +800,6 @@ app.delete('/remover-permissao', async (req, res) => {
         res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 });
-
 
 
 app.post('/login-master', async (req, res) => {
