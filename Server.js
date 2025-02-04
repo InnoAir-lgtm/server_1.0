@@ -149,7 +149,6 @@ app.post('/cadastrar-tipo-pessoa', async (req, res) => {
 
 
 
-
 app.post('/cadastrar-usuario', async (req, res) => {
     try {
         const dados = req.body;
@@ -164,11 +163,6 @@ app.post('/cadastrar-usuario', async (req, res) => {
         return res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 });
-
-
-// Corrigir esse error
-
-
 
 
 app.post("/associar-tipo-pessoa", async (req, res) => {
@@ -187,8 +181,6 @@ app.post("/associar-tipo-pessoa", async (req, res) => {
     }
 });
 
-
-//
 
 app.post('/associar-papel-empresa', async (req, res) => {
     try {
@@ -219,7 +211,6 @@ app.post('/associar-endereco', async (req, res) => {
         if (!pes_id || !epe_tipo || !end_cep) {
             return res.status(400).json({ message: 'Os campos pes_id, epe_tipo e end_cep são obrigatórios.' });
         }
-
         const { error } = await supabase
             .schema(schema)
             .from('endereco_pessoa')
@@ -242,8 +233,6 @@ app.post('/associar-endereco', async (req, res) => {
     }
 });
 
-
-
 app.post('/associar-contato-pessoa', async (req, res) => {
     try {
         const { schema, ctt_contato, ctt_tipo, pes_id, ctt_numero_email } = req.body;
@@ -259,12 +248,10 @@ app.post('/associar-contato-pessoa', async (req, res) => {
             console.warn('Schema não fornecido.');
             return res.status(400).json({ message: 'O campo schema é obrigatório.' });
         }
-
         if (!pes_id || !ctt_contato || !ctt_tipo) {
             console.warn('Campos obrigatórios ausentes:', { pes_id, ctt_contato, ctt_tipo });
             return res.status(400).json({ message: 'Os campos pes_id, ctt_contato e ctt_tipo são obrigatórios.' });
         }
-
         const { error } = await supabase
             .schema(schema)
             .from('contatos')
@@ -279,7 +266,6 @@ app.post('/associar-contato-pessoa', async (req, res) => {
             console.error('Erro ao inserir contato no banco de dados:', error.message);
             throw error;
         }
-
         console.log('Contato associado com sucesso no schema:', schema);
         res.status(201).json({ message: 'Contato associado com sucesso!' });
     } catch (error) {
@@ -316,7 +302,7 @@ app.get('/listar-contatos-pessoa', async (req, res) => {
 
 app.delete('/deletar-contato', async (req, res) => {
     try {
-        const { ctt_id, schema } = req.query; 
+        const { ctt_id, schema } = req.query;
         if (!ctt_id) {
             return res.status(400).json({ message: 'O campo ctt_id é obrigatório' });
         }
@@ -329,7 +315,7 @@ app.delete('/deletar-contato', async (req, res) => {
             .schema(schema)
             .from('contatos')
             .delete()
-            .eq('ctt_id', ctt_id); 
+            .eq('ctt_id', ctt_id);
 
         if (error) throw error;
 
@@ -356,15 +342,12 @@ app.delete('/deletar-tipos-pessoa', async (req, res) => {
         if (error) {
             throw error;
         }
-
         res.status(200).json({ message: 'Tipo de pessoa removido com sucesso.' });
     } catch (error) {
         console.error('Erro ao excluir tipo de pessoa:', error.message);
         res.status(500).json({ message: 'Erro ao excluir tipo de pessoa.' });
     }
 });
-
-
 
 app.get('/listar-tipos-pessoa', async (req, res) => {
     try {
@@ -430,12 +413,6 @@ app.get('/tipos-pessoa', async (req, res) => {
     }
 });
 
-
-
-
-
-
-
 app.post('/atualizar-associacoes', async (req, res) => {
     const { usr_id, associacoes } = req.body; // Recebe um array de objetos { emp_cnpj, papeis: [pap_id] }
     if (!Array.isArray(associacoes)) {
@@ -448,27 +425,19 @@ app.post('/atualizar-associacoes', async (req, res) => {
             .eq('usr_id', usr_id);
 
         if (deleteError) throw deleteError;
-
-
         const newAssociations = associacoes.flatMap(({ emp_cnpj, papeis }) =>
             papeis.map((pap_id) => ({ usr_id, pap_id, emp_cnpj }))
         );
-
         const { error: insertError } = await supabase
             .from('pap_usr_emp')
             .insert(newAssociations);
-
         if (insertError) throw insertError;
-
         res.json({ message: 'Associações atualizadas com sucesso!' });
     } catch (error) {
         console.error(error);
         res.status(500).json({ error: 'Erro ao atualizar associações.' });
     }
 });
-
-
-
 
 app.post('/associar-permissao', async (req, res) => {
     try {
@@ -489,7 +458,6 @@ app.post('/associar-permissao', async (req, res) => {
     }
 });
 
-// GET
 app.get('/lista-empresas', async (req, res) => {
     try {
         const { data, error } = await supabase.from('empresas').select('emp_nome, emp_cnpj')
@@ -502,29 +470,6 @@ app.get('/lista-empresas', async (req, res) => {
         res.status(500).json({ message: 'Error ao listar empresas' })
     }
 })
-
-// app.get('/listar-endereco-pessoa', async (req, res) => {
-//     try {
-//         const { schema } = req.query;
-//         if (!schema) {
-//             return res.status(400).json({ message: 'Schema não fornecido.' });
-//         }
-
-//         const { data, error } = await supabase
-//             .schema(schema)
-//             .from('endereco_pessoa')
-//             .select('*');
-
-//         if (error) {
-//             throw error;
-//         }
-
-//         res.status(200).json(data);
-//     } catch (error) {
-//         console.error('Erro ao listar endereço pessoa:', error.message);
-//         res.status(500).json({ message: 'Erro ao listar endereço pessoa.' });
-//     }
-// });
 
 app.get('/listar-endereco', async (req, res) => {
     try {
@@ -539,7 +484,7 @@ app.get('/listar-endereco', async (req, res) => {
             .from('endereco_pessoa')
             .select('*')
             .eq('pes_id', pes_id);
-        console.log('Schema:', schema); // Adicionar log
+        console.log('Schema:', schema);
 
 
         if (error) throw error;
@@ -563,12 +508,11 @@ app.delete('/deletar-endereco', async (req, res) => {
             console.warn('Schema não fornecido.');
             return res.status(400).json({ message: 'O campo schema é obrigatório.' });
         }
-
         const { error } = await supabase
             .schema(schema)
             .from('endereco_pessoa')
             .delete()
-            .eq('epe_id', id); // Certifique-se de que 'epe_id' é a coluna correta para o ID do endereço.
+            .eq('epe_id', id);
 
         if (error) throw error;
 
@@ -585,7 +529,6 @@ app.get('/buscar-schema', async (req, res) => {
     const { cnpj } = req.query;
 
     try {
-        // Busca o schema associado ao CNPJ
         const { data, error } = await supabase
             .from('empresas')
             .select('emp_bdschema')
@@ -597,8 +540,6 @@ app.get('/buscar-schema', async (req, res) => {
         if (!data) {
             return res.status(404).json({ error: 'Empresa não encontrada' });
         }
-
-        // Retorna o schema encontrado
         res.json({ schema: data.emp_bdschema });
     } catch (error) {
         console.error('Erro ao buscar schema:', error.message);
@@ -607,31 +548,25 @@ app.get('/buscar-schema', async (req, res) => {
 });
 
 app.get('/dados-empresa', async (req, res) => {
-    const { cnpj } = req.query;  // Pegando o CNPJ da query string
-
+    const { cnpj } = req.query;
     try {
-        // Busca o schema associado ao CNPJ
         const { data, error } = await supabase
             .from('empresas')
-            .select('*')  // Seleciona todos os dados da empresa
+            .select('*')
             .eq('emp_cnpj', cnpj)
-            .single();  // Retorna um único resultado
+            .single();
 
         if (error) throw error;
 
         if (!data) {
             return res.status(404).json({ message: 'Empresa não encontrada' });
         }
-
-        // Retorna os dados encontrados
         res.json(data);
     } catch (error) {
         console.error('Erro ao buscar dados da empresa:', error.message);
         res.status(500).json({ error: 'Erro interno ao buscar dados da empresa' });
     }
 });
-
-
 
 app.get('/pessoas', async (req, res) => {
     try {
@@ -640,7 +575,6 @@ app.get('/pessoas', async (req, res) => {
         if (!schema) {
             return res.status(400).json({ message: 'O campo schema é obrigatório.' });
         }
-
         const { data, error } = await supabase
             .schema(schema)
             .from('pessoas')
@@ -659,11 +593,9 @@ app.delete('/pessoas/:id', async (req, res) => {
     try {
         const { id } = req.params;
         const { schema } = req.query;
-
         if (!schema) {
             return res.status(400).json({ message: 'O campo schema é obrigatório.' });
         }
-
         const { data, error } = await supabase
             .schema(schema)
             .from('pessoas')
@@ -679,10 +611,6 @@ app.delete('/pessoas/:id', async (req, res) => {
     }
 });
 
-
-
-
-
 app.get('/listar-papeis', async (req, res) => {
     try {
         const { data, error } = await supabase.from('papeis').select('pap_papel, pap_id');
@@ -696,8 +624,6 @@ app.get('/listar-papeis', async (req, res) => {
     }
 });
 
-
-
 app.get('/listar-permissoes', async (req, res) => {
     try {
         const { data, error } = await supabase.from('permissoes').select('per_id, per_descricao')
@@ -708,7 +634,6 @@ app.get('/listar-permissoes', async (req, res) => {
         res.status(500).json({ message: 'Erro ao listar permissões' })
     }
 })
-
 
 
 app.get('/listar-usuarios', async (req, res) => {
@@ -724,25 +649,19 @@ app.get('/listar-usuarios', async (req, res) => {
 
 app.get('/permissoes-por-papel/:papelId', async (req, res) => {
     const { papelId } = req.params;
-
     try {
         const { data: papelPermissoes, error: papelError } = await supabase
             .from('papel_permissao')
             .select('permissao_id')
             .eq('papel_id', papelId);
-
         if (papelError) {
             console.error("Erro ao buscar permissões do papel:", papelError);
             return res.status(500).json({ message: "Erro ao buscar permissões do papel." });
         }
-
         if (!papelPermissoes || papelPermissoes.length === 0) {
             return res.status(200).json([]);
         }
-
         const permissaoIds = papelPermissoes.map((item) => item.permissao_id);
-
-
         const { data: permissoes, error: permError } = await supabase
             .from('permissoes')
             .select('per_permissao, per_id')
@@ -759,8 +678,6 @@ app.get('/permissoes-por-papel/:papelId', async (req, res) => {
         res.status(500).json({ message: "Erro interno ao buscar permissões.", details: error.message });
     }
 });
-
-
 
 app.get('/listar-associacoes/:usr_id', async (req, res) => {
     const { usr_id } = req.params;
@@ -785,7 +702,6 @@ app.delete('/remover-permissao', async (req, res) => {
         if (!papel_id || !permissao_id) {
             return res.status(400).json({ message: 'Papel e permissão são obrigatórios.' });
         }
-
         const { error } = await supabase
             .from('papel_permissao')
             .delete()
@@ -793,7 +709,6 @@ app.delete('/remover-permissao', async (req, res) => {
             .eq('permissao_id', permissao_id);
 
         if (error) throw error;
-
         res.status(200).json({ message: 'Permissão removida com sucesso!' });
     } catch (error) {
         console.error('Erro ao remover permissão:', error.message);
@@ -809,7 +724,6 @@ app.post('/login-master', async (req, res) => {
         if (!email || !senha) {
             return res.status(400).json({ message: 'Email e senha são obrigatórios.' });
         }
-
         const { data: usuarios, error } = await supabase
             .from('usuarios')
             .select('usr_id, usr_email, usr_senha, usr_perfil, usr_grupo, usr_nome')
@@ -822,9 +736,7 @@ app.post('/login-master', async (req, res) => {
         if (usuarios.length === 0) {
             return res.status(403).json({ message: 'Credenciais incorretas.' });
         }
-
         const usuario = usuarios[0];
-
         if (usuario.usr_perfil === 'Master' || usuario.usr_perfil === 'Administrador' || usuario.usr_perfil === 'Operador') {
             return res.status(200).json({
                 message: 'Login bem-sucedido!',
@@ -844,8 +756,6 @@ app.post('/login-master', async (req, res) => {
         res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 });
-
-
 
 app.listen(PORT, () => {
     console.log(`Servidor rodando na porta ${PORT}`);
