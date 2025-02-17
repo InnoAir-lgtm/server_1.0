@@ -1,17 +1,13 @@
 const cadastrarPessoa = async (dados, supabase, schema) => {
-    // Verifica se o supabase está configurado corretamente
     if (!supabase) {
         throw new Error('Supabase não configurado.');
     }
-
-    // Verifica se o schema foi enviado
     if (!schema) {
         throw new Error('Schema não especificado');
     }
 
-    // Utiliza o schema para acessar a tabela correta e inserir os dados
     const { data, error } = await supabase
-        .schema(schema)  // Define o schema dinamicamente
+        .schema(schema)
         .from('tipo_pessoa')
         .insert([{
             tpp_descricao: dados.descricao,

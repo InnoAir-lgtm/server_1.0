@@ -11,6 +11,7 @@ const { cadastrarPessoa } = require('./controllers/CadastrarTipoP')
 const { cadastrarPessoaC } = require('./controllers/CadastrarPessoa')
 const { cadastrarEndereco } = require('./controllers/CadastrarEnder');
 const { associarTpPe } = require('./controllers/AssociarTpPe');
+const { agenda } = require('./controllers/Agenda');
 
 require('dotenv').config();
 app.use(express.json());
@@ -147,6 +148,25 @@ app.post('/cadastrar-tipo-pessoa', async (req, res) => {
     }
 });
 
+app.post('/eventos', async (req, res) => {
+    const { schema, ...dados } = req.body;
+
+    if (!schema) {
+        return res.status(400).json({ error: 'Schema é obrigatório' });
+    }
+
+    try {
+        const result = await agenda(dados, supabase, schema);
+        if (result.success) {
+            return res.status(201).json({ message: 'Evento cadastrado com sucesso!', data: result.data });
+        } else {
+            return res.status(400).json({ message: 'Erro ao cadastrar evento.', error: result.error });
+        }
+    } catch (error) {
+        console.error('Erro ao processar requisição:', error.message);
+        return res.status(500).json({ message: 'Erro interno do servidor.' });
+    }
+});
 
 
 app.post('/cadastrar-usuario', async (req, res) => {
@@ -326,13 +346,37 @@ app.delete('/deletar-contato', async (req, res) => {
     }
 });
 
+app.delete('/deletar-evento', async (req, res) => {
+    try {
+        const { evt_id, schema } = req.query;
+        if (!evt_id) {
+            return res.status(400).json({ message: 'O campo evt_id é obrigatório' });
+        }
+        if (!schema) {
+            console.warn('Schema não fornecido.');
+            return res.status(400).json({ message: 'O campo schema é obrigatório.' });
+        }
+        const { error } = await supabase
+        .schema(schema)
+        .from('eventos')
+        .delete()
+        .eq('evt_id', evt_id);
+        
+        if (error) throw error;
+        res.status(200).json({ message: 'Evento deletado com sucesso' });
+    } catch (error) {
+        console.error('Erro ao deletar evento:', error.message);
+        res.status(500).json({ message: 'Erro ao deletar evento' });
+    }
+})
+
 app.delete('/deletar-tipos-pessoa', async (req, res) => {
     try {
         const { pes_id, tpp_id, schema } = req.query;
         if (!pes_id || !tpp_id || !schema) {
             return res.status(400).json({ message: 'Os campos pes_id, tpp_id e schema são obrigatórios.' });
         }
-        const { data, error } = await supabase
+        const { error } = await supabase
             .schema(schema)
             .from('pessoas_tipo')
             .delete()
@@ -369,6 +413,8 @@ app.get('/listar-tipos-pessoa', async (req, res) => {
         res.status(500).json({ message: 'Erro ao listar Tipos' })
     }
 })
+
+
 
 app.get('/tipos-pessoa', async (req, res) => {
     try {
@@ -478,13 +524,11 @@ app.get('/listar-endereco', async (req, res) => {
         if (!pes_id || !schema) {
             return res.status(400).json({ message: 'Os campos pes_id e schema são obrigatórios.' });
         }
-
         const { data, error } = await supabase
             .schema(schema)
             .from('endereco_pessoa')
             .select('*')
             .eq('pes_id', pes_id);
-        console.log('Schema:', schema);
 
 
         if (error) throw error;
@@ -496,6 +540,7 @@ app.get('/listar-endereco', async (req, res) => {
         res.status(500).json({ message: 'Erro ao listar endereços.' });
     }
 });
+
 
 app.delete('/deletar-endereco', async (req, res) => {
     try {
@@ -568,6 +613,33 @@ app.get('/dados-empresa', async (req, res) => {
     }
 });
 
+
+app.get('/eventos', async (req, res) => {
+    try {
+        const { schema, pes_evento } = req.query;
+
+        if (!schema) {
+            return res.status(400).json({ message: 'O campo schema é obrigatório.' });
+        }
+
+        let query = supabase.schema(schema).from('eventos').select('*');
+
+        // Aplicar filtro se pes_evento for informado
+        if (pes_evento) {
+            query = query.eq('pes_evento', pes_evento);
+        }
+
+        const { data, error } = await query;
+        if (error) throw error;
+
+        res.status(200).json({ data });
+    } catch (error) {
+        console.error('Erro ao listar eventos:', error.message);
+        res.status(500).json({ message: 'Erro ao listar eventos.' });
+    }
+});
+
+
 app.get('/pessoas', async (req, res) => {
     try {
         const { schema } = req.query;
@@ -588,6 +660,38 @@ app.get('/pessoas', async (req, res) => {
         res.status(500).json({ message: 'Erro ao listar pessoas.' });
     }
 });
+
+app.put('/pessoas/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { schema } = req.query;
+        const { pes_cpf_cnpj, pes_rg, pes_ie, pes_dn, pes_nome, pes_fantasia, pes_fis_jur } = req.body;
+
+        if (!schema) {
+            return res.status(400).json({ message: 'O campo schema é obrigatório.' });
+        }
+        const { error } = await supabase
+            .schema(schema)
+            .from('pessoas')
+            .update({
+                pes_cpf_cnpj,
+                pes_rg,
+                pes_ie,
+                pes_dn,
+                pes_nome,
+                pes_fantasia,
+                pes_fis_jur,
+                pes_dtupd: new Date()
+            })
+            .eq('pes_id', id);
+        if (error) throw error;
+        res.status(200).json({ message: 'Pessoa atualizada com sucesso!' });
+    } catch (error) {
+        console.error('Erro ao atualizar pessoa:', error.message);
+        res.status(500).json({ message: 'Erro ao atualizar pessoa.' });
+    }
+});
+
 
 app.delete('/pessoas/:id', async (req, res) => {
     try {
