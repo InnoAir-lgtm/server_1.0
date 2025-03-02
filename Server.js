@@ -106,19 +106,19 @@ app.post('/cadastrar-endereco', async (req, res) => {
 });
 
 app.post('/cadastrar-pessoa', async (req, res) => {
+    console.log('Requisição recebida em /cadastrar-pessoa');
     const { schema, ...dados } = req.body;
+    console.log('Dados recebidos:', dados);
+
 
     if (!schema) {
         return res.status(400).json({ error: 'Schema não especificado.' });
     }
-
     try {
         const result = await cadastrarPessoaC(dados, supabase, schema);
-
         if (!result.success) {
             return res.status(400).json({ error: result.error });
         }
-
         res.status(201).json({ message: 'Pessoa cadastrada com sucesso!', data: result.data });
     } catch (error) {
         console.error(error);
@@ -168,6 +168,34 @@ app.post('/eventos', async (req, res) => {
     }
 });
 
+app.put('/eventos/:id', async (req, res) => {
+    const { status, observacao } = req.body;
+    const { id } = req.params;
+    if (!status || !observacao) {
+        return res.status(400).json({ error: 'Status e Observação são obrigatórios' });
+    }
+    try {
+        const { data, error } = await supabase
+            .schema(schema)
+            .from('eventos')
+            .update({
+                evt_status: status,
+                evt_descricao: observacao,
+                evt_upd: new Date() 
+            })
+            .eq('evt_id', id);
+        if (error) {
+            return res.status(400).json({ error: 'Erro ao atualizar evento', details: error });
+        }
+        if (data.length === 0) {
+            return res.status(404).json({ error: 'Evento não encontrado' });
+        }
+        return res.status(200).json({ message: 'Evento atualizado com sucesso', data: data });
+    } catch (error) {
+        console.error('Erro ao atualizar evento:', error.message);
+        return res.status(500).json({ message: 'Erro interno do servidor.' });
+    }
+});
 
 app.post('/cadastrar-usuario', async (req, res) => {
     try {
@@ -357,11 +385,11 @@ app.delete('/deletar-evento', async (req, res) => {
             return res.status(400).json({ message: 'O campo schema é obrigatório.' });
         }
         const { error } = await supabase
-        .schema(schema)
-        .from('eventos')
-        .delete()
-        .eq('evt_id', evt_id);
-        
+            .schema(schema)
+            .from('eventos')
+            .delete()
+            .eq('evt_id', evt_id);
+
         if (error) throw error;
         res.status(200).json({ message: 'Evento deletado com sucesso' });
     } catch (error) {
@@ -414,14 +442,14 @@ app.get('/listar-tipos-pessoa', async (req, res) => {
     }
 })
 
-
-
 app.get('/tipos-pessoa', async (req, res) => {
     try {
         const { pes_id, schema } = req.query;
         if (!pes_id || !schema) {
             return res.status(400).json({ message: 'Os campos pes_id e schema são obrigatórios.' });
         }
+
+        // Buscar os tipos de pessoa associados ao pes_id
         const { data: tiposPessoa, error: tiposPessoaError } = await supabase
             .schema(schema)
             .from('pessoas_tipo')
@@ -434,7 +462,10 @@ app.get('/tipos-pessoa', async (req, res) => {
         if (!tiposPessoa || tiposPessoa.length === 0) {
             return res.status(404).json({ message: 'Nenhum tipo de pessoa encontrado para este pes_id.' });
         }
+
         const tppIds = tiposPessoa.map(tipo => tipo.tpp_id);
+
+        // Buscar a descrição dos tipos de pessoa
         const { data: tiposDescricao, error: tiposDescricaoError } = await supabase
             .schema(schema)
             .from('tipo_pessoa')
@@ -444,11 +475,25 @@ app.get('/tipos-pessoa', async (req, res) => {
         if (tiposDescricaoError) {
             throw tiposDescricaoError;
         }
+
+        // Buscar o nome da pessoa
+        const { data: pessoaData, error: pessoaError } = await supabase
+            .schema(schema)
+            .from('pessoas')
+            .select('pes_nome')
+            .eq('pes_id', pes_id)
+            .single();
+
+        if (pessoaError) {
+            throw pessoaError;
+        }
+
         const result = tiposPessoa.map(tipo => {
             const descricao = tiposDescricao.find(d => d.tpp_id === tipo.tpp_id);
             return {
                 tpp_id: tipo.tpp_id,
                 tpp_descricao: descricao ? descricao.tpp_descricao : 'Descrição não encontrada',
+                pes_nome: pessoaData ? pessoaData.pes_nome : 'Nome não encontrado'
             };
         });
 
@@ -458,6 +503,7 @@ app.get('/tipos-pessoa', async (req, res) => {
         res.status(500).json({ message: 'Erro ao listar tipos de pessoa.' });
     }
 });
+
 
 app.post('/atualizar-associacoes', async (req, res) => {
     const { usr_id, associacoes } = req.body; // Recebe um array de objetos { emp_cnpj, papeis: [pap_id] }
@@ -617,21 +663,15 @@ app.get('/dados-empresa', async (req, res) => {
 app.get('/eventos', async (req, res) => {
     try {
         const { schema, pes_evento } = req.query;
-
         if (!schema) {
             return res.status(400).json({ message: 'O campo schema é obrigatório.' });
         }
-
         let query = supabase.schema(schema).from('eventos').select('*');
-
-        // Aplicar filtro se pes_evento for informado
         if (pes_evento) {
             query = query.eq('pes_evento', pes_evento);
         }
-
         const { data, error } = await query;
         if (error) throw error;
-
         res.status(200).json({ data });
     } catch (error) {
         console.error('Erro ao listar eventos:', error.message);
@@ -639,18 +679,21 @@ app.get('/eventos', async (req, res) => {
     }
 });
 
-
 app.get('/pessoas', async (req, res) => {
     try {
-        const { schema } = req.query;
+        const { schema, email } = req.query;
 
         if (!schema) {
             return res.status(400).json({ message: 'O campo schema é obrigatório.' });
         }
-        const { data, error } = await supabase
-            .schema(schema)
-            .from('pessoas')
-            .select('*');
+
+        let query = supabase.schema(schema).from('pessoas').select('*');
+
+        if (email) {
+            query = query.eq('pes_email', email);
+        }
+
+        const { data, error } = await query;
         if (error) throw error;
 
         res.status(200).json({ data });
@@ -660,6 +703,7 @@ app.get('/pessoas', async (req, res) => {
         res.status(500).json({ message: 'Erro ao listar pessoas.' });
     }
 });
+
 
 app.put('/pessoas/:id', async (req, res) => {
     try {
