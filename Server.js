@@ -169,33 +169,40 @@ app.post('/eventos', async (req, res) => {
 });
 
 app.put('/eventos/:id', async (req, res) => {
-    const { status, observacao } = req.body;
+    const { schema } = req.query;
     const { id } = req.params;
-    if (!status || !observacao) {
-        return res.status(400).json({ error: 'Status e Observação são obrigatórios' });
+    const { titulo, descricao, endereco, status, observacao } = req.body;
+
+    if (!titulo || !descricao || !endereco || !status) {
+        return res.status(400).json({ error: 'Todos os campos são obrigatórios' });
     }
     try {
         const { data, error } = await supabase
             .schema(schema)
-            .from('eventos')
+            .from('eventos') 
             .update({
+                evt_titulo: titulo,
+                evt_descricao: descricao,
+                evt_local: endereco,
                 evt_status: status,
-                evt_descricao: observacao,
-                evt_upd: new Date() 
+                evt_upd: new Date()
             })
-            .eq('evt_id', id);
+            .eq('evt_id', id)
+            .select(); 
         if (error) {
+            console.error("Erro no Supabase:", error);
             return res.status(400).json({ error: 'Erro ao atualizar evento', details: error });
         }
-        if (data.length === 0) {
+        if (!data || data.length === 0) {
             return res.status(404).json({ error: 'Evento não encontrado' });
         }
-        return res.status(200).json({ message: 'Evento atualizado com sucesso', data: data });
+        return res.status(200).json({ message: 'Evento atualizado com sucesso', data });
     } catch (error) {
         console.error('Erro ao atualizar evento:', error.message);
         return res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 });
+
 
 app.post('/cadastrar-usuario', async (req, res) => {
     try {
