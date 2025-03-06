@@ -179,40 +179,16 @@ app.put('/eventos/:id', async (req, res) => {
     try {
         const { data, error } = await supabase
             .schema(schema)
-            .from('eventos')
-        app.put('/eventos/:id/status-descricao', async (req, res) => {
-            const { schema } = req.query;
-            const { id } = req.params;
-            const { descricao, status } = req.body;
-            if (!descricao || !status) {
-                return res.status(400).json({ error: 'Os campos descrição e status são obrigatórios' });
-            }
-            try {
-                const { data, error } = await supabase
-                    .from(schema)
-                    .from('eventos')
-                    .update({
-                        evt_descricao: descricao,
-                        evt_status: status,
-                        evt_upd: new Date()
-                    })
-                    .eq('evt_id', id)
-                    .select();
-                if (error) {
-                    console.error("Erro no Supabase:", error);
-                    return res.status(400).json({ error: 'Erro ao atualizar evento', details: error });
-                }
-                if (!data || data.length === 0) {
-                    return res.status(404).json({ error: 'Evento não encontrado' });
-                }
-                return res.status(200).json({ message: 'Status e descrição atualizados com sucesso', data });
-            } catch (error) {
-                console.error('Erro ao atualizar evento:', error.message);
-                return res.status(500).json({ message: 'Erro interno do servidor.' });
-            }
-        });
-
-        console.log(data)
+            .from('eventos') 
+            .update({
+                evt_titulo: titulo,
+                evt_descricao: descricao,
+                evt_local: endereco,
+                evt_status: status,
+                evt_upd: new Date()
+            })
+            .eq('evt_id', id)
+            .select(); 
         if (error) {
             console.error("Erro no Supabase:", error);
             return res.status(400).json({ error: 'Erro ao atualizar evento', details: error });
@@ -221,53 +197,6 @@ app.put('/eventos/:id', async (req, res) => {
             return res.status(404).json({ error: 'Evento não encontrado' });
         }
         return res.status(200).json({ message: 'Evento atualizado com sucesso', data });
-    } catch (error) {
-        console.error('Erro ao atualizar evento:', error.message);
-        return res.status(500).json({ message: 'Erro interno do servidor.' });
-    }
-});
-
-app.put('/eventos/:id/status-descricao', async (req, res) => {
-    const { schema } = req.query; 
-    const { id } = req.params;
-    const { descricao, status } = req.body;
-
-    console.log('Recebendo PUT request para /eventos/:id/status-descricao');
-    console.log('Parâmetros recebidos: ', { schema, id, descricao, status });
-
-    if (!descricao || !status) {
-        console.log("Faltando descrição ou status.");
-        return res.status(400).json({ error: 'Os campos descrição e status são obrigatórios' });
-    }
-
-    const updateData = {
-        evt_descricao: descricao,
-        evt_status: status,
-        evt_upd: new Date()
-    };
-
-    console.log('Dados de atualização: ', updateData);
-
-    try {
-        const { data, error } = await supabase
-            .from(schema)
-            .from('eventos')
-            .update(updateData)
-            .eq('evt_id', id)
-            .select();
-        
-        if (error) {
-            console.error("Erro no Supabase:", error);
-            return res.status(400).json({ error: 'Erro ao atualizar evento', details: error });
-        }
-
-        if (!data || data.length === 0) {
-            console.log('Evento não encontrado com o id: ', id);
-            return res.status(404).json({ error: 'Evento não encontrado' });
-        }
-
-        console.log('Evento atualizado com sucesso:', data);
-        return res.status(200).json({ message: 'Status e descrição atualizados com sucesso', data });
     } catch (error) {
         console.error('Erro ao atualizar evento:', error.message);
         return res.status(500).json({ message: 'Erro interno do servidor.' });
