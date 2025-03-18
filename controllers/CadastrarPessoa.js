@@ -9,9 +9,10 @@ const cadastrarPessoaC = async (dados, supabase, schema) => {
 
     try {
         const { tipoPessoa, cpf, cnpj, rg, inscricaoEstadual, dataNascimento, nome, fantasia, email } = dados;
-        if (!tipoPessoa || (!cpf && !cnpj) || !nome) {
-            throw new Error('Dados obrigatórios ausentes. Verifique o tipo de pessoa, CPF/CNPJ e nome.');
+        if (!tipoPessoa || (!cpf && !cnpj) || !nome || !dataNascimento) {
+            throw new Error('Dados obrigatórios ausentes. Verifique o tipo de pessoa, CPF/CNPJ, nome e data de nascimento.');
         }
+
         const identificador = tipoPessoa === 'cpf' ? cpf : cnpj;
         const { data: existePessoa, error: consultaError } = await supabase
             .schema(schema)
@@ -50,12 +51,17 @@ const cadastrarPessoaC = async (dados, supabase, schema) => {
         }
         console.log('Pessoa cadastrada:', data);
 
+        // Gerar senha no formato "YYYYPrimeiroNome@bela"
+        const anoNascimento = new Date(dataNascimento).getFullYear();
+        const primeiroNome = nome.split(' ')[0];
+        const senhaGerada = `${anoNascimento}${primeiroNome}@bela`;
+
         const usuarioPayload = {
-            usr_email: email,  
-            usr_nome: nome,   
-            usr_senha: '2313@Pedro',  
-            usr_grupo: 'bela_arte',   
-            usr_perfil: 'Operador' 
+            usr_email: email,
+            usr_nome: nome,
+            usr_senha: senhaGerada,
+            usr_grupo: 'bela_arte',
+            usr_perfil: 'Operador',
         };
 
         const { error: usuarioError } = await supabase
