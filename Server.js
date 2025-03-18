@@ -206,7 +206,7 @@ app.put('/eventos/:id', async (req, res) => {
 app.put('/eventos/:id/status-descricao', async (req, res) => {
     const { schema } = req.query;
     const { id } = req.params;
-    const { descricao, status } = req.body;
+    const { descricao, status, observacao } = req.body;
     if (!descricao || !status) {
         console.log("Faltando descrição ou status.");
         return res.status(400).json({ error: 'Os campos descrição e status são obrigatórios' });
@@ -214,9 +214,12 @@ app.put('/eventos/:id/status-descricao', async (req, res) => {
 
     const updateData = {
         evt_descricao: descricao,
+        evt_obs: observacao,
         evt_status: status,
         evt_upd: new Date()
     };
+
+    console.log('Dados de atualização:', updateData);
 
     try {
         const { data, error } = await supabase

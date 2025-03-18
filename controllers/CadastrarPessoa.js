@@ -50,11 +50,9 @@ const cadastrarPessoaC = async (dados, supabase, schema) => {
             return { success: false, error };
         }
         console.log('Pessoa cadastrada:', data);
-
-        // Gerar senha no formato "YYYYPrimeiroNome@bela"
         const anoNascimento = new Date(dataNascimento).getFullYear();
         const primeiroNome = nome.split(' ')[0];
-        const senhaGerada = `${anoNascimento}${primeiroNome}@bela`;
+        const senhaGerada = `${anoNascimento}${primeiroNome}@inno`;
 
         const usuarioPayload = {
             usr_email: email,
