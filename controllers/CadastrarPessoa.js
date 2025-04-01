@@ -2,11 +2,9 @@ const cadastrarPessoaC = async (dados, supabase, schema) => {
     if (!supabase) {
         throw new Error('Conexão Supabase não foi inicializada.');
     }
-
     if (!schema) {
         throw new Error('Schema não foi fornecido.');
     }
-
     try {
         const { tipoPessoa, cpf, cnpj, rg, inscricaoEstadual, dataNascimento, nome, fantasia, email } = dados;
         if (!tipoPessoa || (!cpf && !cnpj) || !nome || !dataNascimento) {
@@ -27,7 +25,6 @@ const cadastrarPessoaC = async (dados, supabase, schema) => {
         if (existePessoa.length > 0) {
             return { success: false, error: 'CPF ou CNPJ já cadastrado no sistema.' };
         }
-
         const payload = {
             pes_rg: rg,
             pes_ie: inscricaoEstadual,
@@ -73,9 +70,7 @@ const cadastrarPessoaC = async (dados, supabase, schema) => {
         }
 
         console.log('Usuário cadastrado com sucesso.');
-
         return { success: true, data };
-
     } catch (err) {
         console.error('Erro inesperado no cadastro:', err.message);
         return { success: false, error: err.message };

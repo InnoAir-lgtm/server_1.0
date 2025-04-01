@@ -28,20 +28,33 @@ POST http://localhost:3000/associar-endereco
 Content-Type: application/json
 
 {
-                "pes_id": 4,
-                "epe_numero":"12",
-                "epe_complemento":"Qd.10 Çt.12",
-                "epe_tipo": "Residencial",
-                "end_cep": 74470150,
-                "epe_latitude": "-4512",
-                "epe_longitude": "-1524"
+    "pes_id": 4,
+    "epe_numero": "12",
+    "epe_complemento": "Qd.10 Çt.12",
+    "epe_tipo": "Residencial",
+    "end_cep": 74470150,
+    "epe_latitude": "-4512",
+    "epe_longitude": "-1524"
 }
 
 ###
-GET http://localhost:3000/listar-contatos-pessoa
+
+GET http://localhost:3000/listar-contatos-pessoa 
 Content-Type: application/json
 
 ###
 
-GET http://localhost:3000/pessoas?schema=belaarte_service
+POST http://localhost:3000/cadastrar-empreendimento  
 Content-Type: application/json
+
+{
+    "cep": 74660070,
+    "numero": "100",
+    "nome": "Empreendimento X",
+    "complemento": "Bloco B",
+    "arquiteto": 123,
+    "construtora": "Construtora Y",
+    "responsavel": "João Silva",
+    "engenheiro": "Maria Oliveira"
+}
+

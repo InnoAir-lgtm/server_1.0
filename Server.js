@@ -9,9 +9,15 @@ const { cadastrarPapeis } = require('./controllers/CadastrarPapeis');
 const { cadastrarPermissoes } = require('./controllers/CadastrarPermis');
 const { cadastrarPessoa } = require('./controllers/CadastrarTipoP')
 const { cadastrarPessoaC } = require('./controllers/CadastrarPessoa')
-const { cadastrarEndereco } = require('./controllers/CadastrarEnder');
 const { associarTpPe } = require('./controllers/AssociarTpPe');
 const { agenda } = require('./controllers/Agenda');
+
+const cadastrarTipoProduto = require('./routes/CadastrarTipoProduto')
+const tipoPessoaRoutes = require('./routes/ListarTipoPessoas')
+const registrarProcedencia = require('./routes/ProcedenciaRoute')
+const EnderecoRouter = require('./routes/EnderecoRouter')
+
+const EmpreendimentoRoute = require('./routes/EmpreendimentoRoute');
 
 require('dotenv').config();
 app.use(express.json());
@@ -29,6 +35,7 @@ const corsOptions = {
 
 app.options('*', cors(corsOptions)); // Configuração para pré-solicitações (OPTIONS)
 app.use(cors(corsOptions));
+
 
 
 // Chave e conexão BD
@@ -52,6 +59,21 @@ app.post('/cadastrar-empresa', async (req, res) => {
     }
 });
 
+app.post('/cadastrar-tipo-produto', cadastrarTipoProduto)
+app.post('/cadastrar-procedencia', registrarProcedencia)
+
+app.post('/cadastrar-endereco', EnderecoRouter)
+app.get('/listar-enderecos', EnderecoRouter)
+
+app.get('/listar-tipos-pessoa', tipoPessoaRoutes)
+app.delete('/deletar-tipo-pessoa', tipoPessoaRoutes)
+
+app.post('/cadastrar-empreendimento', EmpreendimentoRoute )
+app.get('/listar-empreendimentos', EmpreendimentoRoute )
+app.delete('/delete-empreendimento', EmpreendimentoRoute )
+app.put('/atualizar-empreendimento', EmpreendimentoRoute)
+
+
 
 app.post('/cadastrar-papeis', async (req, res) => {
     try {
@@ -69,6 +91,8 @@ app.post('/cadastrar-papeis', async (req, res) => {
 })
 
 
+
+
 app.post('/cadastrar-permissoes', async (req, res) => {
     try {
         const dados = req.body;
@@ -84,26 +108,8 @@ app.post('/cadastrar-permissoes', async (req, res) => {
     }
 });
 
-app.post('/cadastrar-endereco', async (req, res) => {
-    const { schema, ...dados } = req.body;
+//EBDERCI
 
-    if (!schema) {
-        return res.status(400).json({ error: 'Schema não especificado.' });
-    }
-
-    try {
-        const result = await cadastrarEndereco(dados, supabase, schema);
-
-        if (!result.success) {
-            return res.status(400).json({ error: result.error });
-        }
-
-        res.status(201).json({ message: 'Endereço cadastrado com sucesso!', data: result.data });
-    } catch (error) {
-        console.error('Erro ao cadastrar endereço:', error);
-        res.status(500).json({ error: 'Erro ao cadastrar endereço.' });
-    }
-});
 
 app.post('/cadastrar-pessoa', async (req, res) => {
     console.log('Requisição recebida em /cadastrar-pessoa');
@@ -469,26 +475,6 @@ app.delete('/deletar-tipos-pessoa', async (req, res) => {
     }
 });
 
-app.get('/listar-tipos-pessoa', async (req, res) => {
-    try {
-        const { schema } = req.query
-        if (!schema) {
-            console.warn('Schema não aparece.');
-            return res.status(400).json({ message: 'O campo schema é obrigatorio' })
-        }
-
-        const { data, error } = await supabase
-            .schema(schema)
-            .from('tipo_pessoa')
-            .select('*');
-
-        if (error) throw error;
-        res.status(200).json({ data })
-    } catch (error) {
-        console.log('Erro ao listar Tipos', error.message)
-        res.status(500).json({ message: 'Erro ao listar Tipos' })
-    }
-})
 
 app.get('/tipos-pessoa', async (req, res) => {
     try {
@@ -496,8 +482,6 @@ app.get('/tipos-pessoa', async (req, res) => {
         if (!pes_id || !schema) {
             return res.status(400).json({ message: 'Os campos pes_id e schema são obrigatórios.' });
         }
-
-        // Buscar os tipos de pessoa associados ao pes_id
         const { data: tiposPessoa, error: tiposPessoaError } = await supabase
             .schema(schema)
             .from('pessoas_tipo')
@@ -510,10 +494,7 @@ app.get('/tipos-pessoa', async (req, res) => {
         if (!tiposPessoa || tiposPessoa.length === 0) {
             return res.status(404).json({ message: 'Nenhum tipo de pessoa encontrado para este pes_id.' });
         }
-
         const tppIds = tiposPessoa.map(tipo => tipo.tpp_id);
-
-        // Buscar a descrição dos tipos de pessoa
         const { data: tiposDescricao, error: tiposDescricaoError } = await supabase
             .schema(schema)
             .from('tipo_pessoa')
@@ -523,8 +504,6 @@ app.get('/tipos-pessoa', async (req, res) => {
         if (tiposDescricaoError) {
             throw tiposDescricaoError;
         }
-
-        // Buscar o nome da pessoa
         const { data: pessoaData, error: pessoaError } = await supabase
             .schema(schema)
             .from('pessoas')
@@ -535,7 +514,6 @@ app.get('/tipos-pessoa', async (req, res) => {
         if (pessoaError) {
             throw pessoaError;
         }
-
         const result = tiposPessoa.map(tipo => {
             const descricao = tiposDescricao.find(d => d.tpp_id === tipo.tpp_id);
             return {
