@@ -26,14 +26,21 @@ router.post('/cadastrar-endereco', async (req, res) => {
 
 router.get('/listar-enderecos', async (req, res) => {
     const schema = req.query.schema;
+    const cep = req.query.cep;
+
     if (!schema) {
         return res.status(400).json({ error: 'Schema não especificado.' });
     }
+    if (!cep) {
+        return res.status(400).json({ error: 'CEP não especificado.' });
+    }
+
     try {
         const { data, error } = await supabase
             .schema(schema)
             .from('enderecos')
-            .select('*');
+            .select('*')
+            .eq('end_cep', cep);
 
         if (error) {
             return res.status(400).json({ error: error.message });
@@ -45,6 +52,9 @@ router.get('/listar-enderecos', async (req, res) => {
         res.status(500).json({ error: 'Erro ao listar endereços.' });
     }
 });
+
+
+
 
 
 module.exports = router
