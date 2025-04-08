@@ -7,8 +7,12 @@ const cadastrarPessoaC = async (dados, supabase, schema) => {
     }
     try {
         const { tipoPessoa, cpf, cnpj, rg, inscricaoEstadual, dataNascimento, nome, fantasia, email } = dados;
-        if (!tipoPessoa || (!cpf && !cnpj) || !nome || !dataNascimento) {
-            throw new Error('Dados obrigatórios ausentes. Verifique o tipo de pessoa, CPF/CNPJ, nome e data de nascimento.');
+        if (!tipoPessoa || !nome || (!cpf && tipoPessoa === 'cpf') || (!cnpj && tipoPessoa === 'cnpj')) {
+            throw new Error('Dados obrigatórios ausentes. Verifique o tipo de pessoa e dados correspondentes.');
+        }
+
+        if (tipoPessoa === 'cpf' && !dataNascimento) {
+            throw new Error('Data de nascimento é obrigatória para pessoa física.');
         }
 
         const identificador = tipoPessoa === 'cpf' ? cpf : cnpj;
@@ -47,29 +51,33 @@ const cadastrarPessoaC = async (dados, supabase, schema) => {
             return { success: false, error };
         }
         console.log('Pessoa cadastrada:', data);
-        const anoNascimento = new Date(dataNascimento).getFullYear();
-        const primeiroNome = nome.split(' ')[0];
-        const senhaGerada = `${anoNascimento}${primeiroNome}@inno`;
 
-        const usuarioPayload = {
-            usr_email: email,
-            usr_nome: nome,
-            usr_senha: senhaGerada,
-            usr_grupo: 'bela_arte',
-            usr_perfil: 'Operador',
-        };
+        if (email && dados.tipoTecnicoSelecionado) {
+            const anoNascimento = new Date(dataNascimento).getFullYear();
+            const primeiroNome = nome.split(' ')[0];
+            const senhaGerada = `${anoNascimento}${primeiroNome}@inno`;
 
-        const { error: usuarioError } = await supabase
-            .schema('public')
-            .from('usuarios')
-            .insert([usuarioPayload]);
+            const usuarioPayload = {
+                usr_email: email,
+                usr_nome: nome,
+                usr_senha: senhaGerada,
+                usr_grupo: 'bela_arte',
+                usr_perfil: 'Operador',
+            };
 
-        if (usuarioError) {
-            console.error('Erro ao cadastrar usuário:', usuarioError.message);
-            return { success: false, error: usuarioError };
+            const { error: usuarioError } = await supabase
+                .schema('public')
+                .from('usuarios')
+                .insert([usuarioPayload]);
+
+            if (usuarioError) {
+                console.error('Erro ao cadastrar usuário:', usuarioError.message);
+                return { success: false, error: usuarioError };
+            }
+
+            console.log('Usuário cadastrado com sucesso.');
         }
 
-        console.log('Usuário cadastrado com sucesso.');
         return { success: true, data };
     } catch (err) {
         console.error('Erro inesperado no cadastro:', err.message);

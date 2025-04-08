@@ -60,10 +60,13 @@ app.post('/cadastrar-empresa', async (req, res) => {
 });
 
 app.post('/cadastrar-tipo-produto', cadastrarTipoProduto)
+app.get('/listar-tipo-produto', cadastrarTipoProduto)
+
 app.post('/cadastrar-procedencia', registrarProcedencia)
 
 app.post('/cadastrar-endereco', EnderecoRouter)
 app.get('/listar-enderecos', EnderecoRouter)
+app.get('/buscar-endereco', EnderecoRouter)
 
 app.get('/listar-tipos-pessoa', tipoPessoaRoutes)
 app.delete('/deletar-tipo-pessoa', tipoPessoaRoutes)
@@ -177,7 +180,7 @@ app.post('/eventos', async (req, res) => {
 app.put('/eventos/:id', async (req, res) => {
     const { schema } = req.query;
     const { id } = req.params;
-    const { titulo, descricao, endereco, status } = req.body;
+    const { titulo, descricao, endereco, status, fim, inicio } = req.body;
 
     if (!titulo || !descricao || !endereco || !status) {
         return res.status(400).json({ error: 'Todos os campos são obrigatórios' });
@@ -187,6 +190,8 @@ app.put('/eventos/:id', async (req, res) => {
             .schema(schema)
             .from('eventos')
             .update({
+                evt_fim: fim,
+                evt_inicio: inicio,
                 evt_titulo: titulo,
                 evt_descricao: descricao,
                 evt_local: endereco,

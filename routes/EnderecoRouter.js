@@ -26,6 +26,7 @@ router.post('/cadastrar-endereco', async (req, res) => {
 
 router.get('/listar-enderecos', async (req, res) => {
     const schema = req.query.schema;
+   
     if (!schema) {
         return res.status(400).json({ error: 'Schema não especificado.' });
     }
@@ -33,7 +34,7 @@ router.get('/listar-enderecos', async (req, res) => {
         const { data, error } = await supabase
             .schema(schema)
             .from('enderecos')
-            .select('*');
+            .select('*')
 
         if (error) {
             return res.status(400).json({ error: error.message });
@@ -43,6 +44,41 @@ router.get('/listar-enderecos', async (req, res) => {
     } catch (error) {
         console.error('Erro ao listar endereços:', error);
         res.status(500).json({ error: 'Erro ao listar endereços.' });
+    }
+});
+
+
+router.get('/buscar-endereco', async (req, res) => {
+    const schema = req.query.schema;
+    const cep = req.query.cep;
+
+    if (!schema) {
+        return res.status(400).json({ error: 'Schema não especificado.' });
+    }
+
+    if (!cep) {
+        return res.status(400).json({ error: 'CEP não especificado.' });
+    }
+
+    try {
+        const { data, error } = await supabase
+            .schema(schema)
+            .from('enderecos')
+            .select('*')
+            .eq('end_cep', cep);
+
+        if (error) {
+            return res.status(400).json({ error: error.message });
+        }
+
+        if (data.length === 0) {
+            return res.status(404).json({ message: 'Endereço não encontrado para o CEP informado.' });
+        }
+
+        res.status(200).json({ message: 'Endereço encontrado com sucesso!', data });
+    } catch (error) {
+        console.error('Erro ao buscar endereço por CEP:', error);
+        res.status(500).json({ error: 'Erro ao buscar endereço por CEP.' });
     }
 });
 

@@ -7,6 +7,7 @@ const supabaseUrl = process.env.SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_KEY;
 
 const { createClient } = require('@supabase/supabase-js');
+const supabase = require('../Supabase/supabaseClient');
 
 router.post('/cadastrar-tipo-produto', async (req, res) => {
     const { schema, ...dados } = req.body;
@@ -30,5 +31,29 @@ router.post('/cadastrar-tipo-produto', async (req, res) => {
         return res.status(500).json({ message: 'Erro interno no servidor.' });
     }
 });
+
+router.get('/listar-tipo-produto', async (req, res) => {
+    const schema = req.query.schema
+
+    if (!schema) {
+        return res.status(400).json({ erro: 'schema não especificado.' })
+    }
+
+    try {
+        const { data, error } = await supabase
+            .schema(schema)
+            .from('tipo_produto')
+            .select('*')
+
+        if (error) {
+            return res.status(400).json({ error: error.message })
+        }
+
+        res.status(200).json({ message: 'Tipo listado', data })
+    } catch (error) {
+        console.error('Erro ao listar Tipo:', error);
+        res.status(500).json({ error: 'Erro ao listar tipo.' });
+    }
+})
 
 module.exports = router;
