@@ -71,9 +71,9 @@ app.get('/buscar-endereco', EnderecoRouter)
 app.get('/listar-tipos-pessoa', tipoPessoaRoutes)
 app.delete('/deletar-tipo-pessoa', tipoPessoaRoutes)
 
-app.post('/cadastrar-empreendimento', EmpreendimentoRoute )
-app.get('/listar-empreendimentos', EmpreendimentoRoute )
-app.delete('/delete-empreendimento', EmpreendimentoRoute )
+app.post('/cadastrar-empreendimento', EmpreendimentoRoute)
+app.get('/listar-empreendimentos', EmpreendimentoRoute)
+app.delete('/delete-empreendimento', EmpreendimentoRoute)
 app.put('/atualizar-empreendimento', EmpreendimentoRoute)
 
 
@@ -732,6 +732,42 @@ app.get('/pessoas', async (req, res) => {
     } catch (error) {
         console.error('Erro ao listar pessoas:', error.message);
         res.status(500).json({ message: 'Erro ao listar pessoas.' });
+    }
+});
+
+
+app.get('/buscar-endereco/:cep', async (req, res) => {
+    const schema = req.query.schema;
+    const cep = req.params.cep;
+
+    if (!schema) {
+        return res.status(400).json({ error: 'Schema não especificado.' });
+    }
+
+    if (!cep) {
+        return res.status(400).json({ error: 'CEP não especificado.' });
+    }
+
+    try {
+        const { data, error } = await supabase
+            .schema(schema)
+            .from('enderecos')
+            .select('*')
+            .eq('cep', cep)
+            .single(); // retorna só um
+
+        if (error) {
+            return res.status(400).json({ error: error.message });
+        }
+
+        if (!data) {
+            return res.status(404).json({ message: 'Endereço não encontrado.' });
+        }
+
+        res.status(200).json(data);
+    } catch (error) {
+        console.error('Erro ao buscar endereço:', error);
+        res.status(500).json({ error: 'Erro ao buscar endereço.' });
     }
 });
 
