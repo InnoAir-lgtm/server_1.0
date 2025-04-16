@@ -2,7 +2,6 @@ async function cadastrarEndereco(dados, supabase, schema) {
     if (!supabase) {
         throw new Error('BD not configured');
     }
-
     if (!schema) {
         throw new Error('Schema not specified');
     }
@@ -19,11 +18,9 @@ async function cadastrarEndereco(dados, supabase, schema) {
                 end_uf: dados.estado,
             }
         ]);
-
     if (error) {
         return { success: false, error: error.message };
     }
-
     return { success: true, data };
 }
 
