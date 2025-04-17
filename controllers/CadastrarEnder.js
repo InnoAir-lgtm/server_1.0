@@ -5,7 +5,6 @@ async function cadastrarEndereco(dados, supabase, schema) {
     if (!schema) {
         throw new Error('Schema not specified');
     }
-
     const { data, error } = await supabase
         .schema(schema) 
         .from('enderecos')
