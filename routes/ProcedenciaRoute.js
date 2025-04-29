@@ -27,4 +27,34 @@ router.post('/cadastrar-procedencia', async (req, res) => {
     }
 });
 
+
+router.get('/procedencias', async (req, res) => {
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const { schema } = req.query; 
+
+    if (!schema) {
+        return res.status(400).json({ error: 'Schema é obrigatório' });
+    }
+
+    try {
+        const { data, error } = await supabase
+            .schema(schema)
+            .from('procedencia')    
+            .select('*')            
+    
+        if (error) {
+            console.error('Erro ao buscar procedências:', error.message);
+            return res.status(400).json({ message: 'Erro ao buscar procedências', error: error.message });
+        }
+
+        return res.status(200).json({ procedencias: data });
+    } catch (error) {
+        console.error('Erro interno ao buscar procedências:', error.message);
+        return res.status(500).json({ message: 'Erro interno no servidor.' });
+    }
+});
+
+
+
 module.exports = router;
