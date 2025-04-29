@@ -14,7 +14,7 @@ async function cadastrarEndereco(dados, supabase, schema) {
                 end_logradouro: dados.logradouro,
                 end_bairro: dados.bairro,
                 end_cidade: dados.cidade,
-                end_uf: dados.uf,
+                end_uf: dados.estado,
             }
         ]);
     if (error) {
