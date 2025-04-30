@@ -6,7 +6,7 @@ async function cadastrarEndereco(dados, supabase, schema) {
         throw new Error('Schema not specified');
     }
     const { data, error } = await supabase
-        .schema(schema) 
+        .schema(schema)
         .from('enderecos')
         .insert([
             {
@@ -14,9 +14,10 @@ async function cadastrarEndereco(dados, supabase, schema) {
                 end_logradouro: dados.logradouro,
                 end_bairro: dados.bairro,
                 end_cidade: dados.cidade,
-                end_uf: dados.estado,
+                end_uf: dados.uf, // CORRETO
             }
         ]);
+
     if (error) {
         return { success: false, error: error.message };
     }

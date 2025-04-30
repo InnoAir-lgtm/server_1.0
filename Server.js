@@ -65,8 +65,8 @@ app.get('/listar-tipo-produto', cadastrarTipoProduto)
 app.post('/cadastrar-procedencia', registrarProcedencia)
 app.get('/procedencias', registrarProcedencia)
 
-
 app.post('/cadastrar-endereco', EnderecoRouter)
+
 app.get('/listar-enderecos', EnderecoRouter)
 app.get('/buscar-endereco', EnderecoRouter)
 
