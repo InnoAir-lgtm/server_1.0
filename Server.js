@@ -603,17 +603,25 @@ app.get('/listar-endereco', async (req, res) => {
         if (!pes_id || !schema) {
             return res.status(400).json({ message: 'Os campos pes_id e schema são obrigatórios.' });
         }
+
         const { data, error } = await supabase
             .schema(schema)
             .from('endereco_pessoa')
-            .select('*')
+            .select(`
+                *,
+                enderecos (
+                    end_logradouro,
+                    end_cep,
+                    end_bairro,
+                    end_cidade,
+                    end_uf
+                )
+            `)
             .eq('pes_id', pes_id);
-
 
         if (error) throw error;
 
         res.status(200).json({ data });
-
     } catch (error) {
         console.error('Erro ao listar endereços:', error.message);
         res.status(500).json({ message: 'Erro ao listar endereços.' });

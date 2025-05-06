@@ -15,6 +15,7 @@ POST http://localhost:3000/cadastrar-endereco
 Content-Type: application/json
 
 {
+    "schema": "belaarte",
     "cep": "7234143",
     "logradouro": "Rua x-23",
     "bairro": "Tocantins",
