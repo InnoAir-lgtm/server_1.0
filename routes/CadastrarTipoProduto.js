@@ -47,4 +47,32 @@ router.get('/listar-tipo-produto', async (req, res) => {
     }
 })
 
+
+router.delete('/deletar-tipo-produto/:id', async (req, res) => {
+    const { id } = req.params;
+    const schema = req.query.schema;
+
+    if (!schema) {
+        return res.status(400).json({ error: 'Schema é obrigatório' });
+    }
+
+    try {
+        const { error } = await supabase
+            .schema(schema)
+            .from('tipo_produto')
+            .delete()
+            .eq('tpp_id', id);
+
+        if (error) {
+            return res.status(400).json({ error: error.message });
+        }
+
+        return res.status(200).json({ message: 'Tipo de produto deletado com sucesso!' });
+    } catch (err) {
+        console.error('Erro ao deletar tipo de produto:', err);
+        return res.status(500).json({ error: 'Erro interno no servidor.' });
+    }
+});
+
+
 module.exports = router;

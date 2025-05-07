@@ -56,5 +56,36 @@ router.get('/procedencias', async (req, res) => {
 });
 
 
+router.delete('/procedencias/:id', async (req, res) => {
+    const { schema } = req.query;
+    const { id } = req.params;
+
+    if (!schema) {
+        return res.status(400).json({ error: 'Schema é obrigatório' });
+    }
+
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    try {
+        const { error } = await supabase
+            .schema(schema)
+            .from('procedencia')
+            .delete()
+            .eq('pcd_id', id); // Considerando que o ID do registro é armazenado como "pcd_id"
+
+        if (error) {
+            console.error('Erro ao deletar procedência:', error.message);
+            return res.status(400).json({ message: 'Erro ao deletar procedência', error: error.message });
+        }
+
+        return res.status(200).json({ message: 'Procedência deletada com sucesso!' });
+    } catch (error) {
+        console.error('Erro interno ao deletar procedência:', error.message);
+        return res.status(500).json({ message: 'Erro interno no servidor.' });
+    }
+});
+
+
+
 
 module.exports = router;

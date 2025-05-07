@@ -61,9 +61,11 @@ app.post('/cadastrar-empresa', async (req, res) => {
 
 app.post('/cadastrar-tipo-produto', cadastrarTipoProduto)
 app.get('/listar-tipo-produto', cadastrarTipoProduto)
+app.delete('/deletar-tipo-produto/:id', cadastrarTipoProduto)
 
 app.post('/cadastrar-procedencia', registrarProcedencia)
 app.get('/procedencias', registrarProcedencia)
+app.delete('/procedencias/:id', registrarProcedencia)
 
 app.post('/cadastrar-endereco', EnderecoRouter)
 

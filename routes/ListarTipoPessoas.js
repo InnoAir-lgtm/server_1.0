@@ -32,7 +32,6 @@ router.delete('/deletar-tipo-pessoa', async (req, res) => {
     if (!schema || !tpp_id || isNaN(parseInt(tpp_id))) {
         return res.status(400).json({ error: 'Schema ou ID de tipo de pessoa inválido.' });
     }
-
     try {
         const { error } = await supabase
             .schema(schema)
@@ -44,7 +43,6 @@ router.delete('/deletar-tipo-pessoa', async (req, res) => {
             console.error('Erro ao deletar tipo de pessoa:', error.message);
             return res.status(500).json({ error: error.message });
         }
-
         return res.status(200).json({ message: 'Tipo de pessoa deletado com sucesso!' });
     } catch (error) {
         console.error('Erro ao deletar o tipo de pessoa:', error);
