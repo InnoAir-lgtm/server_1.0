@@ -16,6 +16,7 @@ const cadastrarTipoProduto = require('./routes/CadastrarTipoProduto')
 const tipoPessoaRoutes = require('./routes/ListarTipoPessoas')
 const registrarProcedencia = require('./routes/ProcedenciaRoute')
 const EnderecoRouter = require('./routes/EnderecoRouter')
+const cadastrarProspeccao = require('./routes/CadastroProspecRoutes')
 
 const EmpreendimentoRoute = require('./routes/EmpreendimentoRoute');
 
@@ -79,6 +80,11 @@ app.post('/cadastrar-empreendimento', EmpreendimentoRoute)
 app.get('/listar-empreendimentos', EmpreendimentoRoute)
 app.delete('/delete-empreendimento', EmpreendimentoRoute)
 app.put('/atualizar-empreendimento', EmpreendimentoRoute)
+
+app.post('/cadastrar-prospeccao', cadastrarProspeccao)
+app.get('/listar-prospeccao', cadastrarProspeccao)
+app.put('/atualizar-situacao/:id', cadastrarProspeccao)
+app.put('/editar-prospeccao/:id', cadastrarProspeccao)
 
 
 
