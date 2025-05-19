@@ -87,7 +87,6 @@ app.put('/atualizar-situacao/:id', cadastrarProspeccao)
 app.put('/editar-prospeccao/:id', cadastrarProspeccao)
 
 
-
 app.post('/cadastrar-papeis', async (req, res) => {
     try {
         const dados = req.body;
@@ -102,8 +101,6 @@ app.post('/cadastrar-papeis', async (req, res) => {
         return res.status(500).json({ message: 'Erro interno do servidor.' });
     }
 })
-
-
 
 
 app.post('/cadastrar-permissoes', async (req, res) => {
