@@ -17,8 +17,9 @@ const tipoPessoaRoutes = require('./routes/ListarTipoPessoas')
 const registrarProcedencia = require('./routes/ProcedenciaRoute')
 const EnderecoRouter = require('./routes/EnderecoRouter')
 const cadastrarProspeccao = require('./routes/CadastroProspecRoutes')
-
+const cadastrarAtendiRoute = require('./routes/AtendimentoRoute')
 const EmpreendimentoRoute = require('./routes/EmpreendimentoRoute');
+const ObraRoute = require('./routes/ObraRoute');
 
 require('dotenv').config();
 app.use(express.json());
@@ -34,7 +35,7 @@ const corsOptions = {
     credentials: true,
 };
 
-app.options('*', cors(corsOptions)); // Configuração para pré-solicitações (OPTIONS)
+app.options('*', cors(corsOptions));
 app.use(cors(corsOptions));
 
 
@@ -86,6 +87,10 @@ app.get('/listar-prospeccao', cadastrarProspeccao)
 app.put('/atualizar-situacao/:id', cadastrarProspeccao)
 app.put('/editar-prospeccao/:id', cadastrarProspeccao)
 
+app.post('/cadastrar-atendimento', cadastrarAtendiRoute)
+
+app.post('/cadastrar-obra', ObraRoute)
+app.get('/obras', ObraRoute)
 
 app.post('/cadastrar-papeis', async (req, res) => {
     try {
