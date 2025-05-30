@@ -88,6 +88,7 @@ app.put('/atualizar-situacao/:id', cadastrarProspeccao)
 app.put('/editar-prospeccao/:id', cadastrarProspeccao)
 
 app.post('/cadastrar-atendimento', cadastrarAtendiRoute)
+app.get('/atendimentos', cadastrarAtendiRoute)
 
 app.post('/cadastrar-obra', ObraRoute)
 app.get('/obras', ObraRoute)
